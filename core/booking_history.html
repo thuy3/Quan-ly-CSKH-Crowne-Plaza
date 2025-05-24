@@ -1,0 +1,228 @@
+{% extends 'core/base.html' %}
+{% load currency_filters %}
+{% block main_content %}
+<section class="py-5">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Lịch sử đặt phòng</h2>
+            {% if user.is_authenticated %}
+            <a href="{% url 'room_search' %}" class="btn btn-primary">Đặt phòng mới</a>
+            {% endif %}
+        </div>
+        
+        {% if page_obj %}
+        <div class="card">
+            <div class="card-header">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h5 class="mb-0">Danh sách đặt phòng</h5>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="Tìm kiếm..." id="searchInput">
+                            <select class="form-select" id="statusFilter">
+                                <option value="">Tất cả</option>
+                                <option value="cho_xac_nhan">Chờ xác nhận</option>
+                                <option value="da_xac_nhan">Đã xác nhận</option>
+                                <option value="da_checkin">Đã check-in</option>
+                                <option value="da_checkout">Đã check-out</option>
+                                <option value="da_huy">Đã hủy</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="bookingTable">
+                        <thead>
+                            <tr>
+                                <th>Mã đặt</th>
+                                <th>Phòng</th>
+                                <th>Ngày nhận</th>
+                                <th>Ngày trả</th>
+                                <th>Tổng tiền</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for booking in page_obj %}
+                            <tr>
+                                <td>#{{ booking.ma_ddp }}</td>
+                                <td>{{ booking.phong.ten_p }}</td>
+                                <td>{{ booking.ngay_nhan|date:"d/m/Y" }}</td>
+                                <td>{{ booking.ngay_tra|date:"d/m/Y" }}</td>
+                                <td>{{ booking.gia_ddp|format_currency }} VND</td>
+                                <td>
+                                    {% if booking.trang_thai == 'cho_xac_nhan' %}
+                                    <span class="badge bg-warning">Chờ xác nhận</span>
+                                    {% elif booking.trang_thai == 'da_xac_nhan' %}
+                                    <span class="badge bg-primary">Đã xác nhận</span>
+                                    {% elif booking.trang_thai == 'da_checkin' %}
+                                    <span class="badge bg-success">Đã check-in</span>
+                                    {% elif booking.trang_thai == 'da_checkout' %}
+                                    <span class="badge bg-secondary">Đã check-out</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Đã hủy</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'booking_detail' booking.ma_ddp %}" 
+                                       class="btn btn-sm btn-outline-primary"
+                                       data-bs-toggle="tooltip"
+                                       title="Xem chi tiết">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if booking.trang_thai == 'cho_xac_nhan' %}
+                                    <a href="#" 
+                                       class="btn btn-sm btn-outline-danger cancel-booking"
+                                       data-bs-toggle="tooltip"
+                                       title="Hủy đặt phòng"
+                                       data-booking-id="{{ booking.ma_ddp }}">
+                                        <i class="fas fa-times"></i>
+                                    </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1" aria-label="First">
+                                <span aria-hidden="true">&laquo;&laquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                        <li class="page-item active"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                        {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Last">
+                                <span aria-hidden="true">&raquo;&raquo;</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-info text-center">
+            {% if user.is_authenticated %}
+            <p>Bạn chưa có đặt phòng nào.</p>
+            <a href="{% url 'room_search' %}" class="btn btn-primary">Đặt phòng ngay</a>
+            {% else %}
+            <p>Vui lòng <a href="{% url 'login' %}" class="alert-link">đăng nhập</a> để xem lịch sử đặt phòng.</p>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+
+<div class="modal fade" id="cancelBookingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xác nhận hủy đặt phòng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="cancelBookingForm" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p>Bạn có chắc chắn muốn hủy đặt phòng này?</p>
+                    <div class="mb-3">
+                        <label for="cancelReason" class="form-label">Lý do hủy</label>
+                        <textarea class="form-control" id="cancelReason" name="cancel_reason" rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-danger">Xác nhận hủy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    
+    const searchInput = document.getElementById('searchInput');
+    const statusFilter = document.getElementById('statusFilter');
+    const bookingTable = document.getElementById('bookingTable').getElementsByTagName('tbody')[0];
+    const rows = bookingTable.getElementsByTagName('tr');
+    
+    function filterBookings() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const statusValue = statusFilter.value;
+        
+        for (let row of rows) {
+            const cells = row.getElementsByTagName('td');
+            const roomName = cells[1].textContent.toLowerCase();
+            const status = cells[5].getElementsByTagName('span')[0].textContent.toLowerCase();
+            
+            const matchesSearch = roomName.includes(searchTerm);
+            const matchesStatus = statusValue === '' || 
+                (statusValue === 'cho_xac_nhan' && status.includes('chờ')) ||
+                (statusValue === 'da_xac_nhan' && status.includes('đã xác nhận')) ||
+                (statusValue === 'da_checkin' && status.includes('check-in')) ||
+                (statusValue === 'da_checkout' && status.includes('check-out')) ||
+                (statusValue === 'da_huy' && status.includes('hủy'));
+            
+            if (matchesSearch && matchesStatus) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        }
+    }
+    
+    searchInput.addEventListener('keyup', filterBookings);
+    statusFilter.addEventListener('change', filterBookings);
+    
+    
+    const cancelButtons = document.querySelectorAll('.cancel-booking');
+    const cancelBookingForm = document.getElementById('cancelBookingForm');
+    const cancelBookingModal = new bootstrap.Modal(document.getElementById('cancelBookingModal'));
+    
+    cancelButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const bookingId = this.getAttribute('data-booking-id');
+            cancelBookingForm.action = `/bookings/${bookingId}/`;
+            cancelBookingModal.show();
+        });
+    });
+});
+</script>
+{% endblock %}

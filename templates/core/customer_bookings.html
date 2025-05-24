@@ -1,5 +1,5 @@
 {% extends 'core/base.html' %}
-
+{% load currency_filters %}
 {% block main_content %}
 <section class="py-5">
     <div class="container">
@@ -98,7 +98,7 @@
                         </td>
                         
                         
-                        <td class="text-nowrap">{{ booking.gia_ddp|floatformat:0 }} VND</td>
+                        <td class="text-nowrap">{{ booking.gia_ddp|format_currency }} VND</td>
                         
                         
                         <td>

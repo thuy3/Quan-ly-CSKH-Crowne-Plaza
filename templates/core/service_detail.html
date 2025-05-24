@@ -1,5 +1,5 @@
 {% extends 'core/base.html' %}
-
+{% load currency_filters %}
 {% block main_content %}
 <section class="py-5">
     <div class="container">
@@ -32,7 +32,7 @@
                             <label class="col-sm-4 col-form-label fw-bold">Giá dịch vụ</label>
                             <div class="col-sm-8">
                                 <input type="text" class="form-control-plaintext" 
-                                       value="{{ service.phi_dv|floatformat:0 }} VND" style="background-color: #EEF6FB;" readonly>
+                                       value="{{ service.phi_dv|format_currency }} VND" style="background-color: #EEF6FB;" readonly>
                             </div>
                         </div>
 

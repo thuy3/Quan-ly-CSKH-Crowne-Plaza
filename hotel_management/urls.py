@@ -47,7 +47,6 @@ urlpatterns = [
     # Customer URLs
     path('my-bookings/', core_views.customer_bookings, name='customer_bookings'),
     path('bookings/<int:pk>/', core_views.booking_detail, name='booking_detail'),
-    path('bookings/<int:booking_pk>/request/', core_views.create_request, name='create_request'),
 
     # Admin URLs
     path('admin-dashboard/', core_views.admin_dashboard, name='admin_dashboard'),

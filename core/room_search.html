@@ -1,0 +1,91 @@
+{% extends 'core/base.html' %}
+{% load currency_filters %}
+{% block main_content %}
+<section class="py-5">
+    <div class="container">
+        <h2 class="mb-4">Kết quả tìm kiếm phòng</h2>
+        <div class="row">
+            
+            <div class="col-md-3 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6>Bộ lọc</h6>
+                    </div>
+                    <div class="card-body">
+                        <form method="get" action="{% url 'room_search' %}">
+                            <div class="mb-3">
+                                <label class="form-label">Tình trạng phòng</label>
+                                <select name="room_status" class="form-select">
+                                    <option value="trong" {% if request.GET.room_status == "trong" or not request.GET.room_status %}selected{% endif %}>Trống</option>
+                                    <option value="da_dat" {% if request.GET.room_status == "da_dat" %}selected{% endif %}>Đã đặt</option>
+                                    <option value="dang_su_dung" {% if request.GET.room_status == "dang_su_dung" %}selected{% endif %}>Đang sử dụng</option>
+                                    <option value="bao_tri" {% if request.GET.room_status == "bao_tri" %}selected{% endif %}>Bảo trì</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Số người</label>
+                                <select name="guests" class="form-select">
+                                    <option value="1" {% if request.GET.guests == "1" %}selected{% endif %}>1 người</option>
+                                    <option value="2" {% if request.GET.guests == "2" or not request.GET.guests %}selected{% endif %}>2 người</option>
+                                    <option value="3" {% if request.GET.guests == "3" %}selected{% endif %}>3 người</option>
+                                    <option value="4" {% if request.GET.guests == "4" %}selected{% endif %}>4 người</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Loại phòng</label>
+                                <select name="room_type" class="form-select">
+                                    <option value="">Tất cả</option>
+                                    <option value="standard" {% if request.GET.room_type == "standard" %}selected{% endif %}>Standard</option>
+                                    <option value="deluxe" {% if request.GET.room_type == "deluxe" %}selected{% endif %}>Deluxe</option>
+                                    <option value="suite" {% if request.GET.room_type == "suite" %}selected{% endif %}>Suite</option>
+                                    <option value="family" {% if request.GET.room_type == "family" %}selected{% endif %}>Gia đình</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Tìm kiếm</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            
+            <div class="col-md-9">
+                {% if rooms %}
+                <div class="row">
+                    {% for room in rooms %}
+                    <div class="col-md-6 mb-4">
+                        <div class="card room-card h-100">
+                            <img src="{{ room.anh_dai_dien.url }}" class="card-img-top" alt="{{ room.loai_p }}" style="height: 200px; object-fit: cover;">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <h5 class="card-title mb-0">{{ room.get_loai_p_display }}</h5>
+                                    <span class="badge 
+                                        {% if room.trang_thai == 'trong' %}bg-success
+                                        {% elif room.trang_thai == 'da_dat' %}bg-warning text-dark
+                                        {% elif room.trang_thai == 'dang_su_dung' %}bg-primary
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ room.get_trang_thai_display }}
+                                    </span>
+                                </div>
+                                <p class="card-text text-muted mt-2">{{ room.mo_ta|truncatechars:100 }}</p>
+                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                    <div>
+                                        <span class="text-primary fw-bold">{{ room.gia|format_currency }} VND</span>
+                                        <span class="d-block text-muted small">/đêm</span>
+                                    </div>
+                                    <a href="{% url 'room_detail' room.ma_p %}" class="btn btn-sm btn-outline-primary">Xem chi tiết</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-warning">
+                    Không tìm thấy phòng phù hợp với tiêu chí của bạn. Vui lòng thử lại với các tiêu chí khác.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

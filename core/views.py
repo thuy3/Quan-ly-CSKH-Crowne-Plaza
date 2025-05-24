@@ -910,32 +910,56 @@ def process_booking(request, pk):
 
     if request.method == 'POST':
         action = request.POST.get('action')
+        note = request.POST.get('note', '')
+
         # Nhân viên chỉ được phép xác nhận đơn đặt phòng
         if request.user.loai_tk == 'nhan_vien':
             if action != 'confirm':
                 messages.error(request, "Bạn không có quyền thực hiện hành động này.")
-                return redirect('admin_booking_history')
+                logger.warning(f"Staff {request.user.username} attempted unauthorized action: {action}")
+                return redirect('admin_booking_management')  # Changed from 'admin_booking_history'
             if booking.trang_thai != 'cho_xac_nhan':
                 messages.error(request, "Đơn đặt phòng không ở trạng thái chờ xác nhận.")
-                return redirect('admin_booking_history')
+                logger.warning(f"Staff {request.user.username} attempted to confirm booking {booking.ma_ddp} with invalid status: {booking.trang_thai}")
+                return redirect('admin_booking_management')
 
         if action == 'confirm':
             booking.trang_thai = 'da_xac_nhan'
+            booking.ghi_chu = note
             booking.save()
             messages.success(request, "Đã xác nhận đặt phòng")
+            logger.info(f"Booking {booking.ma_ddp} confirmed by {request.user.username}")
+
         elif request.user.loai_tk == 'admin':
             if action == 'checkin':
+                if booking.trang_thai != 'da_xac_nhan':
+                    messages.error(request, "Đơn đặt phòng phải ở trạng thái đã xác nhận để check-in.")
+                    logger.warning(f"Admin {request.user.username} attempted to check-in booking {booking.ma_ddp} with invalid status: {booking.trang_thai}")
+                    return redirect('admin_booking_management')
                 booking.trang_thai = 'da_checkin'
-                if booking.phong:
+                if booking.phong:  # Ensure phong exists
                     booking.phong.trang_thai = 'dang_su_dung'
                     booking.phong.save()
+                else:
+                    logger.warning(f"Booking {booking.ma_ddp} has no associated room during check-in.")
+                booking.ghi_chu = note
                 booking.save()
                 messages.success(request, "Đã check-in khách")
+                logger.info(f"Booking {booking.ma_ddp} checked-in by {request.user.username}")
+
             elif action == 'checkout':
+                if booking.trang_thai != 'da_checkin':
+                    messages.error(request, "Đơn đặt phòng phải ở trạng thái đã check-in để check-out.")
+                    logger.warning(f"Admin {request.user.username} attempted to check-out booking {booking.ma_ddp} with invalid status: {booking.trang_thai}")
+                    return redirect('admin_booking_management')
                 booking.trang_thai = 'da_checkout'
-                if booking.phong:
+                if booking.phong:  # Ensure phong exists
                     booking.phong.trang_thai = 'trong'
                     booking.phong.save()
+                else:
+                    logger.warning(f"Booking {booking.ma_ddp} has no associated room during check-out.")
+                booking.ghi_chu = note
+                booking.save()
 
                 room_cost = booking.gia_ddp if booking.gia_ddp is not None else 0
                 services_cost_data = booking.dondatdichvu_set.aggregate(total_services=Sum('thanh_tien'))
@@ -951,20 +975,29 @@ def process_booking(request, pk):
                     messages.success(request, f"Đã check-out khách cho đơn #{booking.ma_ddp} và tạo hóa đơn.")
                 else:
                     messages.info(request, f"Đã check-out khách cho đơn #{booking.ma_ddp}. Hóa đơn đã tồn tại.")
+                logger.info(f"Booking {booking.ma_ddp} checked-out by {request.user.username}, Invoice total: {total_invoice_amount}")
 
-                booking.save()
             elif action == 'cancel':
+                if booking.trang_thai == 'da_checkout':
+                    messages.error(request, "Không thể hủy đơn đã check-out.")
+                    logger.warning(f"Admin {request.user.username} attempted to cancel booking {booking.ma_ddp} with status: {booking.trang_thai}")
+                    return redirect('admin_booking_management')
                 booking.trang_thai = 'da_huy'
+                booking.ghi_chu = note
                 booking.save()
                 messages.success(request, "Đã hủy đặt phòng")
+                logger.info(f"Booking {booking.ma_ddp} canceled by {request.user.username}")
+
             else:
                 messages.error(request, "Hành động không hợp lệ.")
-                return redirect('admin_booking_history')
+                logger.warning(f"Admin {request.user.username} attempted invalid action: {action}")
+                return redirect('admin_booking_management')
         else:
             messages.error(request, "Bạn không có quyền thực hiện hành động này.")
-            return redirect('admin_booking_history')
+            logger.warning(f"User {request.user.username} (role: {request.user.loai_tk}) attempted unauthorized action: {action}")
+            return redirect('admin_booking_management')
 
-        return redirect('admin_booking_history')
+        return redirect('admin_booking_management')
 
     context = {
         'booking': booking,
@@ -1307,6 +1340,13 @@ def booking_detail(request, pk):
     ordered_services = DonDatDichVu.objects.filter(don_dat_phong=booking)
     available_services = DichVu.objects.filter(hoat_dong=True)
 
+    # Format gia_ddp
+    formatted_gia_ddp = "{:,.0f}".format(booking.gia_ddp) if booking.gia_ddp is not None else "0"
+
+    # Format phi_dv for each service in available_services
+    for service in available_services:
+        service.formatted_phi_dv = "{:,.0f}".format(service.phi_dv) if service.phi_dv is not None else "0"
+
     if request.method == 'POST' and (request.user.loai_tk in ['admin', 'nhan_vien'] or (hasattr(request.user, 'khachhang') and booking.khach_hang == request.user.khachhang)):
         if 'action' in request.POST:
             action = request.POST.get('action')
@@ -1368,9 +1408,9 @@ def booking_detail(request, pk):
         'is_admin': request.user.loai_tk == 'admin',
         'is_staff': request.user.loai_tk == 'nhan_vien',
         'is_customer': is_customer(request.user),
+        'formatted_gia_ddp': formatted_gia_ddp,
     }
     return render(request, 'core/booking_detail.html', context)
-
 # ------------------- Customer Views (Customer Only) -------------------
 
 @login_required
@@ -1409,32 +1449,7 @@ def customer_bookings(request):
     }
     return render(request, 'core/customer_bookings.html', context)
 
-@login_required
-@user_passes_test(is_customer)
-def create_request(request, booking_pk):
-    booking = get_object_or_404(DonDatPhong, pk=booking_pk)
 
-    if not hasattr(request.user, 'khachhang') or booking.khach_hang != request.user.khachhang:
-        messages.error(request, "Bạn không có quyền tạo yêu cầu cho đặt phòng này.")
-        return redirect('home')
-
-    if request.method == 'POST':
-        form = YeuCauForm(request.POST)
-        if form.is_valid():
-            yeu_cau = form.save(commit=False)
-            yeu_cau.khach_hang = request.user.khachhang
-            yeu_cau.phong = booking.phong
-            yeu_cau.save()
-            messages.success(request, "Đã gửi yêu cầu hỗ trợ thành công.")
-            return redirect('booking_detail', pk=booking_pk)
-    else:
-        form = YeuCauForm(initial={'phong': booking.phong})
-
-    context = {
-        'form': form,
-        'booking': booking,
-    }
-    return render(request, 'core/create_request.html', context)
 
 @login_required
 @user_passes_test(is_customer)

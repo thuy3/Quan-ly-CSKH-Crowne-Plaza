@@ -973,10 +973,12 @@ def process_booking(request, pk):
     }
     return render(request, 'admin/process_booking.html', context)
 
+
 @login_required
 @user_passes_test(lambda u: u.is_authenticated and getattr(u, 'loai_tk', '').strip().lower() in ['admin', 'nhan_vien'])
 def admin_schedule_management(request):
-    logger.debug(f"User accessing admin_schedule_management: {request.user.username}, Role: {getattr(request.user, 'loai_tk', 'N/A')}, Authenticated: {request.user.is_authenticated}")
+    logger.debug(
+        f"User accessing admin_schedule_management: {request.user.username}, Role: {getattr(request.user, 'loai_tk', 'N/A')}, Authenticated: {request.user.is_authenticated}")
     today = timezone.now().date()
     year = request.GET.get('year', today.year)
     month = request.GET.get('month', today.month)
@@ -1012,18 +1014,31 @@ def admin_schedule_management(request):
     if week:
         weeks.append(week + [None] * (7 - len(week)))
 
-    # Chỉ admin được xem danh sách nhân viên
-    staff = NhanVien.objects.filter(trang_thai='dang_lam') if request.user.loai_tk == 'admin' else NhanVien.objects.none()
-    schedules = LichLamViec.objects.filter(
-        ngay_lam__range=[first_day, last_day]
-    ).select_related('nhan_vien')
+    # Chỉ admin được phép xem danh sách nhân viên
+    staff = NhanVien.objects.filter(
+        trang_thai='dang_lam') if request.user.loai_tk == 'admin' else NhanVien.objects.none()
+
+    # Nhân viên chỉ được xem lịch làm việc của chính mình
+    if request.user.loai_tk == 'nhan_vien':
+        try:
+            staff_profile = NhanVien.objects.get(tai_khoan=request.user)
+            schedules = LichLamViec.objects.filter(
+                ngay_lam__range=[first_day, last_day],
+                nhan_vien=staff_profile
+            ).select_related('nhan_vien')
+        except NhanVien.DoesNotExist:
+            schedules = LichLamViec.objects.none()
+    else:
+        schedules = LichLamViec.objects.filter(
+            ngay_lam__range=[first_day, last_day]
+        ).select_related('nhan_vien')
 
     try:
         staff_profile = NhanVien.objects.get(tai_khoan=request.user) if request.user.loai_tk == 'nhan_vien' else None
     except NhanVien.DoesNotExist:
         staff_profile = None
 
-    # Chỉ admin được thêm ca làm
+    # Chỉ admin được phép thêm ca làm việc
     form = None
     if request.user.loai_tk == 'admin':
         form = LichLamViecForm(request.POST or None, initial={'ngay_lam': today})
@@ -1061,7 +1076,6 @@ def admin_schedule_management(request):
         'staff_profile': staff_profile,
     }
     return render(request, 'admin/schedule_management.html', context)
-
 @login_required
 @user_passes_test(lambda u: u.is_authenticated and getattr(u, 'loai_tk', '').strip().lower() in ['admin', 'nhan_vien'])
 def delete_schedule(request, pk):

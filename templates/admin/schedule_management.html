@@ -1,5 +1,5 @@
 {% extends 'admin/base.html' %}
-{% load static %} {# Thêm load static cho các trường hợp chung #}
+{% load static %}
 
 {% block breadcrumb %}
 <li class="breadcrumb-item active" aria-current="page">Quản lý lịch làm việc</li>
@@ -28,7 +28,9 @@
             <table class="table table-bordered">
                 <thead>
                     <tr>
+                        {% if is_admin %}
                         <th>Nhân viên</th>
+                        {% endif %}
                         <th class="text-center">Thứ 2</th>
                         <th class="text-center">Thứ 3</th>
                         <th class="text-center">Thứ 4</th>
@@ -39,13 +41,53 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for employee in staff %}
+                    {% if is_admin %}
+                        {% for employee in staff %}
+                            {% for week in weeks %}
+                            <tr>
+                                {% if forloop.first %}
+                                <td rowspan="{{ weeks|length }}" style="vertical-align: middle;">{{ employee.ten_nv }}</td>
+                                {% endif %}
+
+                                {% for day in week %}
+                                <td class="text-center {% if day and day.weekday >= 5 %}bg-light{% endif %}" style="height: 100px;">
+                                    {% if day %}
+                                        <div class="d-flex flex-column h-100">
+                                            <div class="mb-1 small">{{ day.day }}</div>
+                                            <div class="flex-grow-1">
+                                                {% for schedule in schedules %}
+                                                    {% if schedule.nhan_vien == employee and schedule.ngay_lam == day %}
+                                                    <div class="p-1 mb-1 rounded schedule-item
+                                                        {% if schedule.ca_lam == 'sang' %}bg-warning text-dark
+                                                        {% elif schedule.ca_lam == 'chieu' %}bg-info text-dark
+                                                        {% else %}bg-danger text-white{% endif %}">
+                                                        <span class="schedule-short">
+                                                            {% if schedule.ca_lam == 'sang' %}Sáng: 7h00-12h00
+                                                            {% elif schedule.ca_lam == 'chieu' %}Chiều: 12h00-17h00
+                                                            {% elif schedule.ca_lam == 'toi' %}Tối: 17h00-22h00
+                                                            {% else %}Khuya: 22h-7h00{% endif %}
+                                                        </span>
+                                                        <a href="{% url 'delete_schedule' schedule.ma_lich %}" class="text-danger ms-1">
+                                                            <i class="fas fa-times"></i>
+                                                        </a>
+                                                    </div>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center">Không có nhân viên nào đang làm việc.</td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
                         {% for week in weeks %}
                         <tr>
-                            {% if forloop.first %}
-                            <td rowspan="{{ weeks|length }}" style="vertical-align: middle;">{{ employee.ten_nv }}</td>
-                            {% endif %}
-
                             {% for day in week %}
                             <td class="text-center {% if day and day.weekday >= 5 %}bg-light{% endif %}" style="height: 100px;">
                                 {% if day %}
@@ -53,7 +95,7 @@
                                         <div class="mb-1 small">{{ day.day }}</div>
                                         <div class="flex-grow-1">
                                             {% for schedule in schedules %}
-                                                {% if schedule.nhan_vien == employee and schedule.ngay_lam == day %}
+                                                {% if schedule.ngay_lam == day %}
                                                 <div class="p-1 mb-1 rounded schedule-item
                                                     {% if schedule.ca_lam == 'sang' %}bg-warning text-dark
                                                     {% elif schedule.ca_lam == 'chieu' %}bg-info text-dark
@@ -64,9 +106,9 @@
                                                         {% elif schedule.ca_lam == 'toi' %}Tối: 17h00-22h00
                                                         {% else %}Khuya: 22h-7h00{% endif %}
                                                     </span>
-                                                    <a href="{% url 'delete_schedule' schedule.ma_lich %}" class="text-danger ms-1">
+                                                    <span class="text-danger ms-1 disabled-link">
                                                         <i class="fas fa-times"></i>
-                                                    </a>
+                                                    </span>
                                                 </div>
                                                 {% endif %}
                                             {% endfor %}
@@ -76,24 +118,28 @@
                             </td>
                             {% endfor %}
                         </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center">Không có lịch làm việc nào trong tháng này.</td>
+                        </tr>
                         {% endfor %}
-                    {% endfor %}
+                    {% endif %}
                 </tbody>
             </table>
         </div>
     </div>
 </div>
 
-{# Modal Thêm lịch làm việc - ĐÃ ĐƯỢC LÀM ĐẸP #}
+<!-- Modal Thêm lịch làm việc (chỉ admin thấy) -->
+{% if is_admin %}
 <div class="modal fade" id="addScheduleModal" tabindex="-1" aria-labelledby="addScheduleModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered"> {# Căn giữa modal theo chiều dọc #}
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-
             <div class="modal-header">
                 <h5 class="modal-title" id="addScheduleModalLabel">Thêm lịch làm việc</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form method="post" id="addScheduleModalForm"> {# Thêm ID cho form để JS có thể chọn #}
+            <form method="post" id="addScheduleModalForm">
                 {% csrf_token %}
                 <div class="modal-body">
                     {% if form.non_field_errors %}
@@ -115,7 +161,7 @@
                     </div>
                     <div class="mb-3">
                         <label for="{{ form.ngay_lam.id_for_label }}" class="form-label">Ngày làm</label>
-                        {{ form.ngay_lam }} {# Khuyến khích dùng DateInput widget với type='date' trong forms.py #}
+                        {{ form.ngay_lam }}
                         {% if form.ngay_lam.errors %}
                             <div class="invalid-feedback d-block">
                                 {% for error in form.ngay_lam.errors %}<span>{{ error }}</span>{% endfor %}
@@ -151,11 +197,9 @@
         </div>
     </div>
 </div>
-{% endblock %}
+{% endif %}
 
-{% comment %}
 <style>
-    /* CSS gốc của bạn cho bảng lịch được giữ nguyên ở đây */
     .table th, .table td {
         min-width: 80px;
         width: 80px;
@@ -184,24 +228,38 @@
         font-size: 0.8rem;
         padding: 0.5rem;
     }
+    .disabled-link {
+        pointer-events: none;
+        color: grey;
+        cursor: not-allowed;
+        position: relative;
+    }
+    .disabled-link:hover::after {
+        content: "Bạn không có quyền truy cập chức năng này.";
+        position: absolute;
+        background-color: #f8d7da;
+        color: #721c24;
+        padding: 5px 10px;
+        border-radius: 4px;
+        top: -30px;
+        left: 50%;
+        transform: translateX(-50%);
+        white-space: nowrap;
+        z-index: 1000;
+    }
 </style>
-{% endcomment %}
+{% endblock %}
 
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Lấy form trong modal bằng ID đã thêm
     const modalForm = document.getElementById('addScheduleModalForm');
     if (modalForm) {
-        // Thêm class Bootstrap cho các trường input, select, textarea trong modal
         modalForm.querySelectorAll('input:not([type="hidden"]):not([type="submit"]):not([type="reset"]):not([type="button"]), select, textarea').forEach(function(element) {
             let elClassesToAdd = [];
             if (element.tagName.toLowerCase() === 'select') {
                 elClassesToAdd = ['form-select', 'form-select-sm'];
             } else if (element.type === 'checkbox' || element.type === 'radio') {
-                // Checkbox và radio button nên có class 'form-check-input'
-                // và được bọc trong <div class="form-check">.
-                // Tốt nhất là định nghĩa widget trong forms.py.
                 elClassesToAdd = ['form-check-input'];
             } else {
                 elClassesToAdd = ['form-control', 'form-control-sm'];
@@ -213,13 +271,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
-            // Cố gắng đặt type="date" cho trường ngày làm để có date picker của trình duyệt
-            // Tuy nhiên, cách tốt nhất là dùng forms.DateInput(attrs={'type': 'date'}) trong forms.py
             if (element.name === 'ngay_lam' && element.getAttribute('type') !== 'date') {
-                 element.setAttribute('type', 'date');
+                element.setAttribute('type', 'date');
             }
         });
     }
+
+    document.querySelectorAll('.disabled-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            alert('Bạn không có quyền truy cập chức năng này.');
+        });
+    });
 });
 </script>
 {% endblock %}

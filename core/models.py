@@ -109,10 +109,9 @@ class NhanVien(models.Model):
 
 class LichLamViec(models.Model):
     CA_LAM_CHOICES = [
-        ('sang', 'Ca sáng (6h30-11h)'),
-        ('chieu', 'Ca chiều (11h-17h)'),
-        ('toi', 'Ca tối (17h-22h)'),
-        ('khuya', 'Ca khuya (22h-7h)'),
+        ('sang', 'Ca sáng (7h00-15h00)'),
+        ('chieu', 'Ca chiều (15h00-13h00)'),
+        ('toi', 'Ca tối (23h00-7h00)'),
     ]
     ma_lich = models.AutoField(primary_key=True)
     nhan_vien = models.ForeignKey(NhanVien, on_delete=models.CASCADE)

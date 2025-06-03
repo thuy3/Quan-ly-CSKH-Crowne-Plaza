@@ -1,5 +1,7 @@
 {% extends 'admin/base.html' %}
 {% load currency_filters %}
+{% load static %}
+
 {% block breadcrumb %}
 <li class="breadcrumb-item active" aria-current="page">Quản lý phòng</li>
 {% endblock %}
@@ -7,65 +9,69 @@
 {% block admin_content %}
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <div><h5 class="mb-0">Danh sách phòng</h5>
-            <small class="text-muted">Số lượng: {{ page_obj.paginator.count }} phòng</small></div>
+        <div>
+            <h5 class="mb-0">Danh sách phòng</h5>
+            <small class="text-muted">Số lượng: {{ page_obj.paginator.count }} phòng</small>
+        </div>
+        <div class="d-flex">
+            <form method="get" class="d-flex align-items-center">
+                <div class="input-group me-2" style="width: 250px;">
+                    <input type="text"
+                           name="search"
+                           class="form-control form-control-sm"
+                           placeholder="Tìm theo tên hoặc mô tả..."
+                           value="{{ search_query }}">
+                    <button class="btn btn-sm btn-primary" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
 
-            <div class="d-flex">
-                <form method="get" class="d-flex align-items-center">
-                    <div class="input-group me-2" style="width: 250px;">
-                        <input type="text"
-                               name="search"
-                               class="form-control form-control-sm"
-                               placeholder="Tìm theo tên hoặc mô tả..."
-                               value="{{ search_query }}">
-                        <button class="btn btn-sm btn-primary" type="submit">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </div>
-
-                    <div class="dropdown me-2">
-                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
-                                type="button"
-                                id="filterDropdown"
-                                data-bs-toggle="dropdown"
-                                aria-expanded="false">
-                            <i class="fas fa-filter"></i> Lọc
-                        </button>
-                        <div class="dropdown-menu dropdown-menu-end p-3" style="width: 300px;" aria-labelledby="filterDropdown">
-                            <div class="mb-3">
-                                <label class="form-label small">Loại phòng</label>
-                                <select name="type" class="form-select form-select-sm">
-                                    <option value="">Tất cả loại</option>
-                                    <option value="standard" {% if room_type == 'standard' %}selected{% endif %}>Standard</option>
-                                    <option value="deluxe" {% if room_type == 'deluxe' %}selected{% endif %}>Deluxe</option>
-                                    <option value="suite" {% if room_type == 'suite' %}selected{% endif %}>Suite</option>
-
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small">Trạng thái</label>
-                                <select name="status" class="form-select form-select-sm">
-                                    <option value="">Tất cả trạng thái</option>
-                                    <option value="trong" {% if status == 'trong' %}selected{% endif %}>Trống</option>
-                                    <option value="da_dat" {% if status == 'da_dat' %}selected{% endif %}>Đã đặt</option>
-                                    <option value="dang_su_dung" {% if status == 'dang_su_dung' %}selected{% endif %}>Đang sử dụng</option>
-                                    <option value="bao_tri" {% if status == 'bao_tri' %}selected{% endif %}>Bảo trì</option>
-                                </select>
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <a href="{% url 'admin_room_management' %}" class="btn btn-sm btn-outline-secondary">Xóa bộ lọc</a>
-                                <button type="submit" class="btn btn-sm btn-primary">Áp dụng</button>
-                            </div>
+                <div class="dropdown me-2">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                            type="button"
+                            id="filterDropdown"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                        <i class="fas fa-filter"></i> Lọc
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end p-3" style="width: 300px;"
+                         aria-labelledby="filterDropdown">
+                        <div class="mb-3">
+                            <label class="form-label small">Loại phòng</label>
+                            <select name="type" class="form-select form-select-sm">
+                                <option value="">Tất cả loại</option>
+                                <option value="standard" {% if room_type == 'standard' %}selected{% endif %}>Standard</option>
+                                <option value="deluxe" {% if room_type == 'deluxe' %}selected{% endif %}>Deluxe</option>
+                                <option value="suite" {% if room_type == 'suite' %}selected{% endif %}>Suite</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small">Trạng thái</label>
+                            <select name="status" class="form-select form-select-sm">
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="trong" {% if status == 'trong' %}selected{% endif %}>Trống</option>
+                                <option value="da_dat" {% if status == 'da_dat' %}selected{% endif %}>Đã đặt</option>
+                                <option value="dang_su_dung" {% if status == 'dang_su_dung' %}selected{% endif %}>Đang sử dụng</option>
+                                <option value="bao_tri" {% if status == 'bao_tri' %}selected{% endif %}>Bảo trì</option>
+                            </select>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'admin_room_management' %}"
+                               class="btn btn-sm btn-outline-secondary">Xóa bộ lọc</a>
+                            <button type="submit" class="btn btn-sm btn-primary">Áp dụng</button>
                         </div>
                     </div>
-                    {% if is_admin %}
-                        <a href="{% url 'add_room' %}" class="btn btn-primary btn-sm">
-                            <i class="fas fa-plus me-1"></i> Thêm phòng
-                        </a>
-                    {% endif %}
-                </form>
-            </div>
+                </div>
+
+                {% if is_admin %}
+                <a href="{% url 'add_room' %}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus me-1"></i> Thêm phòng
+                </a>
+                {% endif %}
+            </form>
+        </div>
     </div>
+
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-hover">
@@ -76,7 +82,7 @@
                         <th>Loại phòng</th>
                         <th>Giá</th>
                         <th>Trạng thái</th>
-                        <th>Thao tác</th>
+                        {% if is_admin %}<th>Thao tác</th>{% endif %}
                     </tr>
                 </thead>
                 <tbody>
@@ -85,24 +91,32 @@
                         <td>{{ room.ma_p }}</td>
                         <td>{{ room.ten_p }}</td>
                         <td>{{ room.get_loai_p_display }}</td>
-
                         <td>{{ room.gia|format_currency }} VND</td>
                         <td>
                             {% if room.trang_thai == 'trong' %}
-                            <span class="badge bg-success">Trống</span>
+                                <span class="badge bg-success">Trống</span>
                             {% elif room.trang_thai == 'da_dat' %}
-                            <span class="badge bg-warning">Đã đặt</span>
+                                <span class="badge bg-warning">Đã đặt</span>
                             {% elif room.trang_thai == 'dang_su_dung' %}
-                            <span class="badge bg-primary">Đang sử dụng</span>
+                                <span class="badge bg-primary">Đang sử dụng</span>
                             {% else %}
-                            <span class="badge bg-danger">Bảo trì</span>
+                                <span class="badge bg-danger">Bảo trì</span>
                             {% endif %}
                         </td>
-                       {% if is_admin %}
-                            <td>
-                                <a href="{% url 'edit_room' room.ma_p %}" class="btn btn-sm btn-outline-primary">Sửa</a>
-                                <a href="{% url 'delete_room' room.ma_p %}" class="btn btn-sm btn-outline-danger">Xóa</a>
-                            </td>
+                        {% if is_admin %}
+                        <td>
+                            <a href="{% url 'edit_room' room.ma_p %}"
+                               class="btn btn-sm btn-outline-primary me-1">Sửa</a>
+
+                            <!-- Nút mở modal xác nhận xóa -->
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-danger btn-delete-room"
+                                    data-url="{% url 'delete_room' room.ma_p %}"
+                                    data-name="{{ room.ten_p }}"
+                                    data-id="{{ room.ma_p }}">
+                                Xóa
+                            </button>
+                        </td>
                         {% endif %}
                     </tr>
                     {% endfor %}
@@ -112,4 +126,56 @@
         {% include 'admin/pagination.html' with page_obj=page_obj %}
     </div>
 </div>
+
+{# Modal xác nhận xoá phòng #}
+<div class="modal fade" id="deleteRoomModal" tabindex="-1"
+     aria-labelledby="deleteRoomModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger" id="deleteRoomModalLabel">
+          <i class="fas fa-exclamation-triangle me-2"></i>Xác nhận xóa phòng
+        </h5>
+        <button type="button" class="btn-close"
+                data-bs-dismiss="modal" aria-label="Đóng"></button>
+      </div>
+      <div class="modal-body" id="deleteRoomModalBody">
+        <!-- Nội dung sẽ được JS đổ vào -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary"
+                data-bs-dismiss="modal">Hủy</button>
+        <form method="post" id="deleteRoomForm" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">Xóa</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var modalEl = document.getElementById('deleteRoomModal'),
+      modal   = new bootstrap.Modal(modalEl),
+      bodyEl  = modalEl.querySelector('#deleteRoomModalBody'),
+      formEl  = modalEl.querySelector('#deleteRoomForm');
+
+  document.querySelectorAll('.btn-delete-room').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var url  = this.getAttribute('data-url'),
+          name = this.getAttribute('data-name'),
+          id   = this.getAttribute('data-id');
+
+      bodyEl.textContent =
+        'Bạn có chắc chắn muốn xóa phòng "' + name +
+        '" (Mã: ' + id + ') không?';
+      formEl.action = url;
+      modal.show();
+    });
+  });
+});
+</script>
 {% endblock %}

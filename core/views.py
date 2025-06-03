@@ -1095,7 +1095,6 @@ def admin_schedule_management(request):
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f"{field}: {error}")
-
     context = {
         'current_date': current_date,
         'prev_month': prev_month,

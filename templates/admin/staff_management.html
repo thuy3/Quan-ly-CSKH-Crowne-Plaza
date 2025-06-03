@@ -2,7 +2,6 @@
 {% load static %}
 
 {% block breadcrumb %}
-{# Breadcrumb của bạn ở đây, ví dụ: #}
 <nav aria-label="breadcrumb">
   <ol class="breadcrumb bg-light rounded px-3 py-2 mb-4">
     <li class="breadcrumb-item active" aria-current="page">Quản lý nhân viên</li>
@@ -12,105 +11,178 @@
 
 {% block admin_content %}
 <div class="card shadow-sm">
-    <div class="card-header bg-light py-3 d-flex justify-content-between align-items-center flex-wrap">
-        <div>
-            <h5 class="mb-0">Danh sách nhân viên</h5>
-            <small class="text-muted">Tổng số: {{ page_obj.paginator.count }} nhân viên</small>
+  <div class="card-header bg-light py-3 d-flex justify-content-between align-items-center flex-wrap">
+    <div>
+      <h5 class="mb-0">Danh sách nhân viên</h5>
+      <small class="text-muted">Tổng số: {{ page_obj.paginator.count }} nhân viên</small>
+    </div>
+    <div class="d-flex mt-2 mt-md-0">
+      {% if is_user_true_admin %}
+      <form method="get" class="d-flex align-items-center me-2">
+        <div class="input-group">
+          <input type="text" name="search"
+                 class="form-control form-control-sm"
+                 placeholder="Tìm theo tên, SĐT, email..."
+                 value="{{ search_query }}">
+          <button class="btn btn-sm btn-outline-primary" type="submit">
+            <i class="fas fa-search"></i>
+          </button>
         </div>
-        <div class="d-flex mt-2 mt-md-0">
-            {% if is_user_true_admin %} {# CHỈ ADMIN MỚI THẤY FORM TÌM KIẾM VÀ NÚT THÊM #}
-            <form method="get" class="d-flex align-items-center me-2">
-                <div class="input-group">
-                    <input type="text" name="search" class="form-control form-control-sm" placeholder="Tìm theo tên, SĐT, email..." value="{{ search_query }}" aria-label="Tìm kiếm nhân viên">
-                    {# Thêm các filter khác nếu có #}
-                    <button class="btn btn-sm btn-outline-primary" type="submit"><i class="fas fa-search"></i></button>
-                </div>
-            </form>
-            <a href="{% url 'add_staff' %}" class="btn btn-primary btn-sm">
-                <i class="fas fa-plus me-1"></i> Thêm nhân viên
-            </a>
-            {% else %}
-             <span class="text-muted fst-italic">Chỉ quản trị viên mới có các chức năng quản lý.</span>
+      </form>
+      <a href="{% url 'add_staff' %}" class="btn btn-primary btn-sm">
+        <i class="fas fa-plus me-1"></i> Thêm nhân viên
+      </a>
+      {% else %}
+      <span class="text-muted fst-italic">Chỉ quản trị viên mới có các chức năng quản lý.</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Mã NV</th>
+            <th style="width:50px;">Ảnh</th>
+            <th>Tên nhân viên</th>
+            <th>Vị trí</th>
+            <th>Trạng thái</th>
+            <th>SĐT</th>
+            {% if is_user_true_admin %}
+            <th class="text-center">Thao tác</th>
             {% endif %}
-        </div>
+          </tr>
+        </thead>
+        <tbody>
+          {% for staff_member in page_obj %}
+          <tr>
+            <td>{{ staff_member.ma_nv }}</td>
+            <td>
+              {% if staff_member.anh_dai_dien and staff_member.anh_dai_dien.url %}
+              <img src="{{ staff_member.anh_dai_dien.url }}"
+                   class="rounded-circle" width="40" height="40"
+                   alt="Avatar của {{ staff_member.ten_nv }}"
+                   style="object-fit:cover;"
+                   onerror="this.onerror=null;this.src='{% static 'images/default-avatar.png' %}';">
+              {% else %}
+              <img src="{% static 'images/default-avatar.png' %}"
+                   class="rounded-circle" width="40" height="40"
+                   alt="Avatar mặc định"
+                   style="object-fit:cover;">
+              {% endif %}
+            </td>
+            <td>{{ staff_member.ten_nv }}</td>
+            <td>{{ staff_member.get_vi_tri_display }}</td>
+            <td>
+              {% if staff_member.trang_thai == 'dang_lam' %}
+              <span class="badge bg-success">Đang làm</span>
+              {% elif staff_member.trang_thai == 'nghi_viec' %}
+              <span class="badge bg-danger">Nghỉ việc</span>
+              {% else %}
+              <span class="badge bg-secondary">{{ staff_member.get_trang_thai_display|default:"Không rõ" }}</span>
+              {% endif %}
+            </td>
+            <td>{{ staff_member.sdt }}</td>
+            {% if is_user_true_admin %}
+            <td class="text-center">
+              <a href="{% url 'edit_staff' staff_member.ma_nv %}"
+                 class="btn btn-sm btn-outline-primary me-1"
+                 title="Sửa"><i class="fas fa-edit"></i></a>
+
+              <!-- nút mở modal xoá -->
+              <button type="button"
+                      class="btn btn-sm btn-outline-danger btn-delete-staff"
+                      data-url="{% url 'delete_staff' staff_member.ma_nv %}"
+                      data-name="{{ staff_member.ten_nv }}"
+                      data-id="{{ staff_member.ma_nv }}"
+                      title="Xóa">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </td>
+            {% endif %}
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="{% if is_user_true_admin %}7{% else %}6{% endif %}"
+                class="text-center text-muted py-5">
+              <i class="fas fa-users-slash fs-3 mb-2"></i><br>
+              {% if search_query %}
+              Không tìm thấy nhân viên phù hợp.
+              {% else %}
+              Hiện chưa có nhân viên nào trong hệ thống.
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Mã NV</th>
-                        <th style="width: 50px;">Ảnh</th>
-                        <th>Tên nhân viên</th>
-                        <th>Vị trí</th>
-                        <th>Trạng thái</th>
-                        <th>SĐT</th>
-                        {% if is_user_true_admin %} {# CHỈ ADMIN MỚI THẤY CỘT THAO TÁC #}
-                        <th class="text-center">Thao tác</th>
-                        {% endif %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for staff_member in page_obj %}
-                    <tr>
-                        <td>{{ staff_member.ma_nv }}</td>
-                        <td>
-                            {% if staff_member.anh_dai_dien and staff_member.anh_dai_dien.url %}
-                                <img src="{{ staff_member.anh_dai_dien.url }}"
-                                     class="rounded-circle" width="40" height="40"
-                                     alt="Avatar của {{ staff_member.ten_nv }}"
-                                     style="object-fit: cover;"
-                                     onerror="this.onerror=null; this.src='{% static 'images/default-avatar.png' %}';">
-                            {% else %}
-                                <img src="{% static 'images/default-avatar.png' %}"
-                                     class="rounded-circle" width="40" height="40"
-                                     alt="Avatar mặc định"
-                                     style="object-fit: cover;">
-                            {% endif %}
-                        </td>
-                        <td>{{ staff_member.ten_nv }}</td>
-                        <td>{{ staff_member.get_vi_tri_display }}</td>
-                        <td>
-                            {% if staff_member.trang_thai == 'dang_lam' %}
-                            <span class="badge bg-success">Đang làm</span>
-                            {% elif staff_member.trang_thai == 'nghi_viec' %}
-                            <span class="badge bg-danger">Nghỉ việc</span>
-                            {% else %}
-                            <span class="badge bg-secondary">{{ staff_member.get_trang_thai_display|default:"Không rõ" }}</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ staff_member.sdt }}</td>
-                        {% if is_user_true_admin %} {# CHỈ ADMIN MỚI THẤY CÁC NÚT TRONG CỘT THAO TÁC #}
-                        <td class="text-center">
-                            <a href="{% url 'edit_staff' staff_member.ma_nv %}" class="btn btn-sm btn-outline-primary me-1" title="Sửa">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <a href="{% url 'delete_staff' staff_member.ma_nv %}" class="btn btn-sm btn-outline-danger" title="Xóa" onclick="return confirm('Bạn có chắc chắn muốn xóa nhân viên {{ staff_member.ten_nv }} ({{ staff_member.ma_nv }}) không?');">
-                                <i class="fas fa-trash-alt"></i>
-                            </a>
-                        </td>
-                        {% endif %}
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="{% if is_user_true_admin %}7{% else %}6{% endif %}" class="text-center text-muted py-5">
-                            <i class="fas fa-users-slash fs-3 mb-2"></i><br>
-                            {% if search_query %}
-                                Không tìm thấy nhân viên nào phù hợp.
-                            {% else %}
-                                Hiện chưa có nhân viên nào trong hệ thống.
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% if page_obj.has_other_pages %}
-            <div class="card-footer bg-light border-0 py-2">
-                {% include 'admin/pagination.html' with page_obj=page_obj %}
-            </div>
-        {% endif %}
+
+    {% if page_obj.has_other_pages %}
+    <div class="card-footer bg-light border-0 py-2">
+      {% include 'admin/pagination.html' with page_obj=page_obj %}
     </div>
+    {% endif %}
+  </div>
 </div>
+
+{# Modal xác nhận xóa #}
+<div class="modal fade" id="deleteStaffModal" tabindex="-1" aria-labelledby="deleteStaffModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger" id="deleteStaffModalLabel">
+          <i class="fas fa-exclamation-triangle me-2"></i>Xác nhận xóa
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="deleteStaffModalBody">
+        <!-- Nội dung sẽ được JS đổ vào -->
+      </div>
+      <div class="modal-footer">
+        <button type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal">Hủy</button>
+        <form method="post" id="deleteStaffForm" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">Xóa</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var deleteModalEl = document.getElementById('deleteStaffModal'),
+      deleteModal   = new bootstrap.Modal(deleteModalEl),
+      bodyEl        = deleteModalEl.querySelector('#deleteStaffModalBody'),
+      formEl        = deleteModalEl.querySelector('#deleteStaffForm');
+
+  // Bắt sự kiện click lên nút .btn-delete-staff
+  document.querySelectorAll('.btn-delete-staff').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      // Lấy data từ chính nút
+      var url  = this.getAttribute('data-url'),
+          name = this.getAttribute('data-name'),
+          id   = this.getAttribute('data-id');
+
+      // Đổ nội dung xác nhận
+      bodyEl.textContent = 'Bạn có chắc chắn muốn xóa nhân viên "'+name+'" ('+id+') không?';
+
+      // Cập nhật action cho form
+      formEl.action = url;
+
+      // Hiển thị modal
+      deleteModal.show();
+    });
+  });
+});
+</script>
 {% endblock %}

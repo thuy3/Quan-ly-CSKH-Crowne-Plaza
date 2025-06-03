@@ -36,7 +36,7 @@
                         <p><strong>Ngày nhận phòng:</strong> {{ booking.ngay_nhan|date:"d/m/Y" }}</p>
                         <p><strong>Ngày trả phòng:</strong> {{ booking.ngay_tra|date:"d/m/Y" }}</p>
                         <p><strong>Số người:</strong> {{ booking.so_luong_nguoi }}</p>
-                        <p><strong>Tổng tiền:</strong> {{ formatted_gia_ddp }} VND</p>  <!-- Use pre-formatted value -->
+                        <p><strong>Tổng tiền:</strong> {{ booking.gia_ddp|format_currency}} VND</p>
                         <p><strong>Trạng thái:</strong>
                             {% if booking.trang_thai == 'cho_xac_nhan' %}
                             <span class="badge bg-warning">Chờ xác nhận</span>
@@ -118,6 +118,7 @@
     </div>
 </section>
 
+
 <div class="modal fade" id="addServiceModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -134,7 +135,7 @@
                         <select name="service_id" class="form-select" required>
                             <option value="" selected disabled>Chọn dịch vụ</option>
                             {% for service in available_services %}
-                            <option value="{{ service.ma_dv }}">{{ service.ten_dv }} - {{ service.formatted_phi_dv }} VND</option>  <!-- Use pre-formatted value -->
+                            <option value="{{ service.ma_dv }}">{{ service.ten_dv }} - {{ service.phi_dv|format_currency }} VND</option>
                             {% empty %}
                             <option value="" disabled>Không có dịch vụ nào</option>
                             {% endfor %}

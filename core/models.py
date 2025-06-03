@@ -7,7 +7,6 @@ from django.core.validators import MinValueValidator
 
 User = settings.AUTH_USER_MODEL
 
-
 class Phong(models.Model):
     LOAI_PHONG_CHOICES = [
         ('standard', 'Phòng Standard'),

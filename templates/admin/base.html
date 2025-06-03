@@ -282,7 +282,8 @@
         }
     }
 </style>
-{% endblock %}
+{% endblock extra_css %}
+
 
 {% block content %}
 <div class="sidebar" style="background-color: #B3DFFF; color: black;">
@@ -291,85 +292,118 @@
         <span>Hotel Admin</span>
     </div>
     <ul class="sidebar-nav">
+        {# --- Trang chủ --- #}
         <li class="sidebar-nav-item">
-            <a href="{% url 'admin_dashboard' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}" style="color: black; font-weight: bold;">
+            <a href="{% url 'admin_dashboard' %}"
+               class="sidebar-nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}"
+               style="color: black; font-weight: bold;">
                 <i class="fas fa-tachometer-alt"></i>
                 <span>Trang chủ</span>
             </a>
         </li>
+
+        {# --- Quản lý đặt phòng --- #}
         <li class="sidebar-nav-item">
-            <a href="#roomManagement" class="sidebar-nav-link {% if request.resolver_match.url_name == 'admin_room_management' or request.resolver_match.url_name == 'admin_booking_management' %}active{% endif %}" data-bs-toggle="collapse" style="color: black; font-weight: bold;">
+            <a href="#roomManagement"
+               class="sidebar-nav-link {% if request.resolver_match.url_name == 'admin_room_management' or request.resolver_match.url_name == 'admin_booking_management' %}active{% endif %}"
+               data-bs-toggle="collapse"
+               style="color: black; font-weight: bold;">
                 <i class="fas fa-bed"></i>
                 <span>Quản lý đặt phòng</span>
                 <i class="fas fa-angle-down ms-auto"></i>
             </a>
-            <ul id="roomManagement" class="sidebar-nav-dropdown {% if request.resolver_match.url_name == 'admin_room_management' or request.resolver_match.url_name == 'admin_booking_management' %}show{% endif %}">
+            <ul id="roomManagement"
+                class="sidebar-nav-dropdown {% if request.resolver_match.url_name == 'admin_room_management' or request.resolver_match.url_name == 'admin_booking_management' %}show{% endif %}">
                 <li>
-                    <a href="{% url 'admin_room_management' %}" class="sidebar-nav-dropdown-link {% if request.resolver_match.url_name == 'admin_room_management' %}active{% endif %}" style="color: black; font-weight: bold;">
+                    <a href="{% url 'admin_room_management' %}"
+                       class="sidebar-nav-dropdown-link {% if request.resolver_match.url_name == 'admin_room_management' %}active{% endif %}"
+                       style="color: black; font-weight: bold;">
                         Danh sách phòng
                     </a>
                 </li>
                 <li>
-                    <a href="{% url 'admin_booking_management' %}" class="sidebar-nav-dropdown-link {% if request.resolver_match.url_name == 'admin_booking_management' %}active{% endif %}" style="color: black; font-weight: bold;">
+                    <a href="{% url 'admin_booking_management' %}"
+                       class="sidebar-nav-dropdown-link {% if request.resolver_match.url_name == 'admin_booking_management' %}active{% endif %}"
+                       style="color: black; font-weight: bold;">
                         Lịch sử đặt phòng
                     </a>
                 </li>
             </ul>
         </li>
+
+        {# --- Quản lý khách hàng --- #}
         <li class="sidebar-nav-item">
-            <a href="{% url 'admin_customer_management' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'admin_customer_management' %}active{% endif %}" style="color: black; font-weight: bold;">
+            <a href="{% url 'admin_customer_management' %}"
+               class="sidebar-nav-link {% if request.resolver_match.url_name == 'admin_customer_management' %}active{% endif %}"
+               style="color: black; font-weight: bold;">
                 <i class="fas fa-users"></i>
                 <span>Quản lý khách hàng</span>
             </a>
         </li>
+
+        {# --- Quản lý ca làm việc --- #}
         <li class="sidebar-nav-item">
-            <a href="#staffManagement" class="sidebar-nav-link {% if request.resolver_match.url_name == 'admin_staff_management' or request.resolver_match.url_name == 'admin_schedule_management' %}active{% endif %}" data-bs-toggle="collapse" style="color: black; font-weight: bold;">
+            <a href="#staffManagement"
+               class="sidebar-nav-link {% if request.resolver_match.url_name == 'admin_staff_management' or request.resolver_match.url_name == 'admin_schedule_management' %}active{% endif %}"
+               data-bs-toggle="collapse"
+               style="color: black; font-weight: bold;">
                 <i class="fas fa-user-tie"></i>
                 <span>Quản lý ca làm việc</span>
                 <i class="fas fa-angle-down ms-auto"></i>
             </a>
-            <ul id="staffManagement" class="sidebar-nav-dropdown {% if request.resolver_match.url_name == 'admin_staff_management' or request.resolver_match.url_name == 'admin_schedule_management' %}show{% endif %}">
-                {% if is_admin %}
+            <ul id="staffManagement"
+                class="sidebar-nav-dropdown {% if request.resolver_match.url_name == 'admin_staff_management' or request.resolver_match.url_name == 'admin_schedule_management' %}show{% endif %}">
                 <li>
-                    <a href="{% url 'admin_staff_management' %}" class="sidebar-nav-dropdown-link {% if request.resolver_match.url_name == 'admin_staff_management' %}active{% endif %}" style="color: black; font-weight: bold;">
+                    <a href="{% url 'admin_staff_management' %}"
+                       class="sidebar-nav-dropdown-link {% if request.resolver_match.url_name == 'admin_staff_management' %}active{% endif %}"
+                       style="color: black; font-weight: bold;">
                         Thông tin nhân viên
                     </a>
                 </li>
-                {% endif %}
                 <li>
-                    <a href="{% url 'admin_schedule_management' %}" class="sidebar-nav-dropdown-link {% if request.resolver_match.url_name == 'admin_schedule_management' %}active{% endif %}" style="color: black; font-weight: bold;">
+                    <a href="{% url 'admin_schedule_management' %}"
+                       class="sidebar-nav-dropdown-link {% if request.resolver_match.url_name == 'admin_schedule_management' %}active{% endif %}"
+                       style="color: black; font-weight: bold;">
                         Ca làm việc
                     </a>
                 </li>
             </ul>
         </li>
+
+        {# --- Quản lý dịch vụ --- #}
         <li class="sidebar-nav-item">
-            <a href="{% url 'admin_request_management' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'admin_request_management' %}active{% endif %}" style="color: black; font-weight: bold;">
-                <i class="fas fa-headset"></i>
-                <span>Quản lý hỗ trợ & phản hồi</span>
-            </a>
-        </li>
-        <li class="sidebar-nav-item">
-            <a href="#serviceManagement" class="sidebar-nav-link {% if request.resolver_match.url_name == 'admin_service_management' or request.resolver_match.url_name == 'admin_service_booking' %}active{% endif %}" data-bs-toggle="collapse" style="color: black; font-weight: bold;">
+            <a href="#serviceManagement"
+               class="sidebar-nav-link {% if request.resolver_match.url_name == 'admin_service_management' or request.resolver_match.url_name == 'admin_service_booking' %}active{% endif %}"
+               data-bs-toggle="collapse"
+               style="color: black; font-weight: bold;">
                 <i class="fas fa-concierge-bell"></i>
                 <span>Quản lý dịch vụ</span>
                 <i class="fas fa-angle-down ms-auto"></i>
             </a>
-            <ul id="serviceManagement" class="sidebar-nav-dropdown {% if request.resolver_match.url_name == 'admin_service_management' or request.resolver_match.url_name == 'admin_service_booking' %}show{% endif %}">
+            <ul id="serviceManagement"
+                class="sidebar-nav-dropdown {% if request.resolver_match.url_name == 'admin_service_management' or request.resolver_match.url_name == 'admin_service_booking' %}show{% endif %}">
                 <li>
-                    <a href="{% url 'admin_service_management' %}" class="sidebar-nav-dropdown-link {% if request.resolver_match.url_name == 'admin_service_management' %}active{% endif %}" style="color: black; font-weight: bold;">
+                    <a href="{% url 'admin_service_management' %}"
+                       class="sidebar-nav-dropdown-link {% if request.resolver_match.url_name == 'admin_service_management' %}active{% endif %}"
+                       style="color: black; font-weight: bold;">
                         Danh sách dịch vụ
                     </a>
                 </li>
                 <li>
-                    <a href="{% url 'admin_service_booking' %}" class="sidebar-nav-dropdown-link {% if request.resolver_match.url_name == 'admin_service_booking' %}active{% endif %}" style="color: black; font-weight: bold;">
+                    <a href="{% url 'admin_service_booking' %}"
+                       class="sidebar-nav-dropdown-link {% if request.resolver_match.url_name == 'admin_service_booking' %}active{% endif %}"
+                       style="color: black; font-weight: bold;">
                         Lịch sử đặt dịch vụ
                     </a>
                 </li>
             </ul>
         </li>
+
+        {# --- Đăng xuất --- #}
         <li class="sidebar-nav-item">
-            <a href="{% url 'logout' %}" class="sidebar-nav-link" style="color: black; font-weight: bold;">
+            <a href="{% url 'logout' %}"
+               class="sidebar-nav-link"
+               style="color: black; font-weight: bold;">
                 <i class="fas fa-sign-out-alt"></i>
                 <span>Đăng xuất</span>
             </a>
@@ -377,22 +411,34 @@
     </ul>
 </div>
 
+
 <div class="main-content">
     <nav class="navbar navbar-expand navbar-light bg-white">
         <div class="container-fluid">
             <button class="btn btn-link d-md-none" type="button" id="sidebarToggle">
                 <i class="fas fa-bars"></i>
             </button>
+
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="{% if user.avatar %}{{ user.avatar.url}}{% else %}{% static 'images/default-avartar.jpg' %}{% endif %}" class="avatar me-2" alt="Avatar">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                       data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="{% if user.avatar %}{{ user.avatar.url }}{% else %}{% static 'images/default-avartar.jpg' %}{% endif %}"
+                             class="avatar me-2" alt="Avatar">
                         <span class="d-none d-md-inline">{{ request.user.get_full_name|default:request.user.username }}</span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                        <li><a class="dropdown-item" href="{% url 'profile' %}"><i class="fas fa-user me-2"></i>Hồ sơ</a></li>
+                        <li>
+                            <a class="dropdown-item" href="{% url 'profile' %}">
+                                <i class="fas fa-user me-2"></i>Hồ sơ
+                            </a>
+                        </li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Đăng xuất</a></li>
+                        <li>
+                            <a class="dropdown-item" href="{% url 'logout' %}">
+                                <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
+                            </a>
+                        </li>
                     </ul>
                 </li>
             </ul>
@@ -403,76 +449,38 @@
         <nav aria-label="breadcrumb" class="mb-4">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}"><i class="fas fa-home"></i></a></li>
-                {% block breadcrumb %}
-                {% endblock %}
+                {% block breadcrumb %}{% endblock %}
             </ol>
         </nav>
-        {% block admin_content %}
-        {% endblock %}
+
+        {% block admin_content %}{% endblock %}
     </div>
 </div>
-{% endblock %}
+{% endblock content %}
+
 
 {% block extra_js %}
+<script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script>
+    // 1) Toggle sidebar trên mobile
     document.getElementById('sidebarToggle').addEventListener('click', function() {
         document.querySelector('.sidebar').classList.toggle('show');
     });
 
-    // Get all sidebar nav links with dropdowns
-    const dropdownLinks = document.querySelectorAll('.sidebar-nav-link[data-bs-toggle="collapse"]');
-
-    // Function to close all dropdowns except the one specified
-    function closeOtherDropdowns(exceptCollapseId) {
-        dropdownLinks.forEach(link => {
-            const collapseId = link.getAttribute('href');
-            if (collapseId !== exceptCollapseId) {
-                const collapseElement = document.querySelector(collapseId);
-                collapseElement.classList.remove('show');
-            }
-        });
-    }
-
-    // Add click event listeners to dropdown links
-    dropdownLinks.forEach(link => {
+    // 2) Toggle submenu khi bấm vào tiêu đề có data-bs-toggle="collapse"
+    document.querySelectorAll('.sidebar-nav-link[data-bs-toggle="collapse"]').forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
-            const collapseId = this.getAttribute('href');
-            const collapseElement = document.querySelector(collapseId);
-            const isOpen = collapseElement.classList.contains('show');
-
-            // Toggle the current dropdown and close others
-            if (!isOpen) {
-                closeOtherDropdowns(collapseId);
-                collapseElement.classList.add('show');
-            } else {
-                collapseElement.classList.remove('show');
-            }
+            const target = this.getAttribute('href');   // ví dụ "#roomManagement"
+            const submenu = document.querySelector(target);
+            submenu.classList.toggle('show');
         });
     });
 
-    // Prevent sub-item clicks from affecting parent dropdown
-    document.querySelectorAll('.sidebar-nav-dropdown-link').forEach(subLink => {
-        subLink.addEventListener('click', function(e) {
-            e.stopPropagation();
-        });
-    });
-
-    // Ensure active dropdown is open on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        dropdownLinks.forEach(link => {
-            const collapseId = link.getAttribute('href');
-            const collapseElement = document.querySelector(collapseId);
-            if (link.classList.contains('active') && !collapseElement.classList.contains('show')) {
-                collapseElement.classList.add('show');
-                closeOtherDropdowns(collapseId);
-            }
-        });
-    });
-
+    // 3) Khởi tạo tooltip (nếu có)
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
 </script>
-{% endblock %}
+{% endblock extra_js %}

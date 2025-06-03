@@ -144,7 +144,7 @@
   </div>
 </section>
 
-<!-- Step1: chọn ngày & dịch vụ -->
+<!-- Step 1: chọn ngày & dịch vụ -->
 <div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -229,7 +229,7 @@
   </div>
 </div>
 
-<!-- Step2: thông tin khách hàng -->
+<!-- Step 2: thông tin khách hàng -->
 <div class="modal fade" id="customerInfoModal" tabindex="-1" aria-labelledby="customerInfoModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -254,11 +254,11 @@
               <h5>{{ room.ten_p }}</h5>
             </div>
             <div class="col-md-6">
-              <!-- inline error -->
+              <!-- Inline error -->
               <div id="modalErrorMessage" class="alert alert-danger alert-dismissible fade show" role="alert" style="display:none; opacity:0; transition:opacity .3s;">
                 <i class="fas fa-exclamation-circle me-2"></i>
                 <span id="modalErrorText"></span>
-                <!-- sử dụng onclick để prevStep -->
+                <!-- Sử dụng onclick để prevStep -->
                 <button type="button" class="btn-close" onclick="prevStep()" aria-label="Close"></button>
               </div>
 
@@ -296,7 +296,7 @@
   </div>
 </div>
 
-<!-- Success -->
+<!-- Success Modal -->
 <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -308,7 +308,7 @@
         <p id="successModalMessage">Chúc mừng, phòng của bạn đã được đặt thành công.</p>
       </div>
       <div class="modal-footer justify-content-center">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        <button type="button" class="btn btn-secondary" id="successModalCloseBtn">Đóng</button>
       </div>
     </div>
   </div>
@@ -316,130 +316,171 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Fallback for Bootstrap JS in case CDN fails -->
+<script>
+  if (typeof bootstrap === 'undefined') {
+    console.error('Bootstrap JS failed to load');
+  }
+</script>
+
 <script>
 function calculateTotal() {
   const inEl = document.getElementById('check_in_date_modal'),
         outEl = document.getElementById('check_out_date_modal'),
         price = parseFloat("{{ room.gia|stringformat:'f' }}");
-  let nights=0, roomSum=0, svcSum=0;
-  if(inEl.value && outEl.value) {
-    const d1=new Date(inEl.value), d2=new Date(outEl.value);
-    if(d2>d1){
-      nights=Math.ceil((d2-d1)/(1000*60*60*24));
-      roomSum=nights*price;
+  let nights = 0, roomSum = 0, svcSum = 0;
+  if (inEl.value && outEl.value) {
+    const d1 = new Date(inEl.value), d2 = new Date(outEl.value);
+    if (d2 > d1) {
+      nights = Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24));
+      roomSum = nights * price;
     }
   }
-  document.querySelectorAll('.service-checkbox:checked').forEach(cb=>svcSum+=parseFloat(cb.dataset.price));
-  document.getElementById('totalNights').textContent=nights;
-  document.getElementById('roomSubtotalPrice').textContent=roomSum.toLocaleString('vi-VN',{style:'currency',currency:'VND'});
-  document.getElementById('servicesSubtotalPrice').textContent=svcSum.toLocaleString('vi-VN',{style:'currency',currency:'VND'});
-  document.getElementById('grandTotalPrice').textContent=(roomSum+svcSum).toLocaleString('vi-VN',{style:'currency',currency:'VND'});
+  document.querySelectorAll('.service-checkbox:checked').forEach(cb => svcSum += parseFloat(cb.dataset.price));
+  document.getElementById('totalNights').textContent = nights;
+  document.getElementById('roomSubtotalPrice').textContent = roomSum.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+  document.getElementById('servicesSubtotalPrice').textContent = svcSum.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+  document.getElementById('grandTotalPrice').textContent = (roomSum + svcSum).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
 }
 
-function validateStep1Dates(){
-  const inEl=document.getElementById('check_in_date_modal'),
-        outEl=document.getElementById('check_out_date_modal');
-  if(!inEl.value||!outEl.value){ alert('Chọn ngày đầy đủ'); return false; }
-  const d1=new Date(inEl.value), d2=new Date(outEl.value), today=new Date(); today.setHours(0,0,0,0);
-  if(d1<today){ alert('Ngày nhận không được quá khứ'); return false; }
-  if(d2<=d1){ alert('Ngày trả phải sau ngày nhận'); return false; }
+function validateStep1Dates() {
+  const inEl = document.getElementById('check_in_date_modal'),
+        outEl = document.getElementById('check_out_date_modal');
+  if (!inEl.value || !outEl.value) { alert('Chọn ngày đầy đủ'); return false; }
+  const d1 = new Date(inEl.value), d2 = new Date(outEl.value), today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (d1 < today) { alert('Ngày nhận không được quá khứ'); return false; }
+  if (d2 <= d1) { alert('Ngày trả phải sau ngày nhận'); return false; }
   return true;
 }
 
-function nextStep(){
-  if(!validateStep1Dates()) return;
-  const btn=document.getElementById('nextStepButton');
-  btn.disabled=true; btn.innerHTML='<span class="spinner-border spinner-border-sm"></span> Đang xử lý...';
-  const formData=new FormData(document.getElementById('bookingStep1Form')), selected=[];
-  document.querySelectorAll('.service-checkbox:checked').forEach(cb=>selected.push(cb.value));
-  formData.append('selected_services_json',JSON.stringify(selected));
-  document.getElementById('finalCheckIn').value=document.getElementById('check_in_date_modal').value;
-  document.getElementById('finalCheckOut').value=document.getElementById('check_out_date_modal').value;
-  document.getElementById('finalGuests').value=document.getElementById('guests_modal').value;
-  document.getElementById('finalServices').value=JSON.stringify(selected);
+// Function to close all modals and clean up backdrops
+function closeAllModals() {
+  $('#bookingModal').modal('hide');
+  $('#customerInfoModal').modal('hide');
+  $('#successModal').modal('hide');
+  $('.modal-backdrop').remove();
+  $('body').removeClass('modal-open');
+}
 
-  fetch("{% url 'room_detail' room.ma_p %}",{
-    method:'POST', body:formData,
-    headers:{ 'X-Requested-With':'XMLHttpRequest', 'X-CSRFToken':document.querySelector('[name=csrfmiddlewaretoken]').value }
+function nextStep() {
+  if (!validateStep1Dates()) return;
+  const btn = document.getElementById('nextStepButton');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang xử lý...';
+  const formData = new FormData(document.getElementById('bookingStep1Form')), selected = [];
+  document.querySelectorAll('.service-checkbox:checked').forEach(cb => selected.push(cb.value));
+  formData.append('selected_services_json', JSON.stringify(selected));
+  document.getElementById('finalCheckIn').value = document.getElementById('check_in_date_modal').value;
+  document.getElementById('finalCheckOut').value = document.getElementById('check_out_date_modal').value;
+  document.getElementById('finalGuests').value = document.getElementById('guests_modal').value;
+  document.getElementById('finalServices').value = JSON.stringify(selected);
+
+  fetch("{% url 'room_detail' room.ma_p %}", {
+    method: 'POST',
+    body: formData,
+    headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value }
   })
-    .then(r=>r.json())
-    .then(data=>{
-      if(data.status==='success'){
-        $('#bookingModal').modal('hide');
+    .then(r => r.json())
+    .then(data => {
+      if (data.status === 'success') {
+        closeAllModals(); // Ensure all modals are closed before opening the next
         $('#customerInfoModal').modal('show');
       } else {
-        alert(data.message||'Lỗi lưu thông tin');
+        alert(data.message || 'Lỗi lưu thông tin');
       }
     })
-    .catch(()=>alert('Lỗi kết nối'))
-    .finally(()=>{
-      btn.disabled=false; btn.innerHTML='<i class="fas fa-arrow-right me-2"></i>Kế tiếp';
+    .catch(() => alert('Lỗi kết nối'))
+    .finally(() => {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-arrow-right me-2"></i>Kế tiếp';
     });
 }
 
-function prevStep(){
-  $('#customerInfoModal').modal('hide');
+function prevStep() {
+  closeAllModals(); // Ensure all modals are closed before opening the previous
   $('#bookingModal').modal('show');
   calculateTotal();
-  // xóa error nếu có
-  const err=document.getElementById('modalErrorMessage');
-  err.style.display='none'; err.style.opacity='0';
-  document.getElementById('modalErrorText').textContent='';
+  // Clear error if any
+  const err = document.getElementById('modalErrorMessage');
+  err.style.display = 'none';
+  err.style.opacity = '0';
+  document.getElementById('modalErrorText').textContent = '';
 }
 
-function handleBookingSubmit(e){
+function handleBookingSubmit(e) {
   e.preventDefault();
-  const btn=document.getElementById('confirmBookingButton');
-  btn.disabled=true; btn.innerHTML='<span class="spinner-border spinner-border-sm"></span> Đang xử lý...';
-  fetch(e.target.action,{
-    method:'POST', body:new FormData(e.target),
-    headers:{ 'X-Requested-With':'XMLHttpRequest', 'X-CSRFToken':document.querySelector('[name=csrfmiddlewaretoken]').value }
+  const btn = document.getElementById('confirmBookingButton');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang xử lý...';
+  fetch(e.target.action, {
+    method: 'POST',
+    body: new FormData(e.target),
+    headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value }
   })
-    .then(r=>r.json())
-    .then(data=>{
-      if(data.status==='success'){
-        $('#customerInfoModal').modal('hide');
+    .then(r => r.json())
+    .then(data => {
+      if (data.status === 'success') {
+        closeAllModals(); // Close all modals before opening success modal
         new bootstrap.Modal(document.getElementById('successModal')).show();
       } else {
-        const errDiv=document.getElementById('modalErrorMessage');
-        document.getElementById('modalErrorText').textContent=data.message||'Lỗi';
-        errDiv.style.display='block'; setTimeout(()=>errDiv.style.opacity='1',10);
+        const errDiv = document.getElementById('modalErrorMessage');
+        document.getElementById('modalErrorText').textContent = data.message || 'Lỗi';
+        errDiv.style.display = 'block';
+        setTimeout(() => errDiv.style.opacity = '1', 10);
       }
     })
-    .catch(err=>{
-      const errDiv=document.getElementById('modalErrorMessage');
-      document.getElementById('modalErrorText').textContent='Lỗi hệ thống: '+(err.message||'');
-      errDiv.style.display='block'; setTimeout(()=>errDiv.style.opacity='1',10);
+    .catch(err => {
+      const errDiv = document.getElementById('modalErrorMessage');
+      document.getElementById('modalErrorText').textContent = 'Lỗi hệ thống: ' + (err.message || '');
+      errDiv.style.display = 'block';
+      setTimeout(() => errDiv.style.opacity = '1', 10);
     })
-    .finally(()=>{
-      btn.disabled=false; btn.innerHTML='<i class="fas fa-check-circle me-2"></i>Xác nhận đặt phòng';
+    .finally(() => {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-check-circle me-2"></i>Xác nhận đặt phòng';
     });
 }
 
-document.addEventListener('DOMContentLoaded',()=>{
-  const inEl=document.getElementById('check_in_date_modal'),
-        outEl=document.getElementById('check_out_date_modal');
-  if(inEl){
-    const today=new Date(), yyyy=today.getFullYear(), mm=String(today.getMonth()+1).padStart(2,'0'), dd=String(today.getDate()).padStart(2,'0');
-    inEl.min=`${yyyy}-${mm}-${dd}`;
-    inEl.addEventListener('change',()=>{
-      if(inEl.value&&outEl){
-        const d2=new Date(inEl.value); d2.setDate(d2.getDate()+1);
-        const y2=d2.getFullYear(), m2=String(d2.getMonth()+1).padStart(2,'0'), d_2=String(d2.getDate()).padStart(2,'0');
-        outEl.min=`${y2}-${m2}-${d_2}`;
-        if(outEl.value&&new Date(outEl.value)<d2) outEl.value='';
+document.addEventListener('DOMContentLoaded', () => {
+  const inEl = document.getElementById('check_in_date_modal'),
+        outEl = document.getElementById('check_out_date_modal');
+  if (inEl) {
+    const today = new Date(), yyyy = today.getFullYear(), mm = String(today.getMonth() + 1).padStart(2, '0'), dd = String(today.getDate()).padStart(2, '0');
+    inEl.min = `${yyyy}-${mm}-${dd}`;
+    inEl.addEventListener('change', () => {
+      if (inEl.value && outEl) {
+        const d2 = new Date(inEl.value);
+        d2.setDate(d2.getDate() + 1);
+        const y2 = d2.getFullYear(), m2 = String(d2.getMonth() + 1).padStart(2, '0'), d_2 = String(d2.getDate()).padStart(2, '0');
+        outEl.min = `${y2}-${m2}-${d_2}`;
+        if (outEl.value && new Date(outEl.value) < d2) outEl.value = '';
       }
       calculateTotal();
     });
   }
-  if(outEl) outEl.addEventListener('change',calculateTotal);
-  document.getElementById('guests_modal')?.addEventListener('change',calculateTotal);
-  document.querySelectorAll('.service-checkbox').forEach(cb=>cb.addEventListener('change',calculateTotal));
-  document.getElementById('bookingStep2Form')?.addEventListener('submit',handleBookingSubmit);
+  if (outEl) outEl.addEventListener('change', calculateTotal);
+  document.getElementById('guests_modal')?.addEventListener('change', calculateTotal);
+  document.querySelectorAll('.service-checkbox').forEach(cb => cb.addEventListener('change', calculateTotal));
+  document.getElementById('bookingStep2Form')?.addEventListener('submit', handleBookingSubmit);
 
-  // Khi đóng customerInfoModal, focus về nút mở bookingModal
-  $('#customerInfoModal').on('hidden.bs.modal', function(){
+  // When closing customerInfoModal, focus back to the bookingModal button
+  $('#customerInfoModal').on('hidden.bs.modal', function () {
     document.querySelector('[data-bs-target="#bookingModal"]').focus();
+  });
+
+  // Ensure success modal cleans up when closed
+  $('#successModal').on('hidden.bs.modal', function () {
+    $('.modal-backdrop').remove();
+    $('body').removeClass('modal-open');
+  });
+
+  // Programmatically close success modal on button click
+  document.getElementById('successModalCloseBtn').addEventListener('click', function () {
+    const successModal = bootstrap.Modal.getInstance(document.getElementById('successModal'));
+    successModal.hide();
+    $('.modal-backdrop').remove();
+    $('body').removeClass('modal-open');
   });
 });
 </script>

@@ -622,7 +622,7 @@ def delete_staff(request, pk):
 @login_required
 @user_passes_test(is_admin_or_staff)
 def admin_service_management(request):
-    logger.debug(f"User accessing admin_service_management: {request.user.username}, Role: {getattr(request.user, 'loai_tk', 'N/A')}, Authenticated: {request.user.is_authenticated}")
+    logger.debug(f"User accessing admin_service_management: {request.user.username}, Role: {getattr(request.user, 'loai_tk', 'N/A')}, Authenticated: {request.user.is_authenticated}") # BẢN GHI ĐỂ BIẾT AI ĐANG ĐĂNG NHẬP
     services = DichVu.objects.all().order_by('-ma_dv')
 
     search_query = request.GET.get('search', '')
@@ -665,7 +665,7 @@ def admin_service_management(request):
             messages.success(request, "Đã thêm dịch vụ mới")
             return redirect('admin_service_management')
 
-    context = {
+    context = { # chuẩn bị dữ liệu đưa vào templates
         'page_obj': page_obj,
         'form': form,
         'search_query': search_query,

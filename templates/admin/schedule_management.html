@@ -1,3 +1,4 @@
+{# File: templates/admin/schedule_management.html #}
 {% extends 'admin/base.html' %}
 {% load static %}
 
@@ -7,153 +8,254 @@
 
 {% block admin_content %}
 <div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <div>
-            <a href="?year={{ prev_month.year }}&month={{ prev_month.month }}"
-               class="btn btn-sm btn-outline-secondary me-2">
-                <i class="fas fa-chevron-left"></i>
-            </a>
-            <span class="h5 mb-0">{{ current_date|date:"F Y" }}</span>
-            <a href="?year={{ next_month.year }}&month={{ next_month.month }}"
-               class="btn btn-sm btn-outline-secondary ms-2">
-                <i class="fas fa-chevron-right"></i>
-            </a>
-        </div>
-        {% if is_admin %}
-        <a href="#" class="btn btn-primary btn-sm"
-           data-bs-toggle="modal" data-bs-target="#addScheduleModal">
-            <i class="fas fa-plus me-1"></i> Thêm lịch làm việc
-        </a>
-        {% endif %}
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <div>
+      <!-- Nút chuyển tháng lùi -->
+      <a href="?year={{ prev_month.year }}&month={{ prev_month.month }}"
+         class="btn btn-sm btn-outline-secondary me-2">
+        <i class="fas fa-chevron-left"></i>
+      </a>
+      <span class="h5 mb-0">{{ current_date|date:"F Y" }}</span>
+      <!-- Nút chuyển tháng tiến -->
+      <a href="?year={{ next_month.year }}&month={{ next_month.month }}"
+         class="btn btn-sm btn-outline-secondary ms-2">
+        <i class="fas fa-chevron-right"></i>
+      </a>
     </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        {% if is_admin %}
-                        <th>Nhân viên</th>
+
+    {# Nếu là Admin, hiển thị nút "Thêm lịch làm việc" #}
+    {% if is_admin %}
+    <a href="#" class="btn btn-primary btn-sm"
+       data-bs-toggle="modal" data-bs-target="#addScheduleModal">
+      <i class="fas fa-plus me-1"></i> Thêm lịch làm việc
+    </a>
+    {% endif %}
+  </div>
+
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            {# Cột "Nhân viên" chỉ hiển thị với Admin #}
+            {% if is_admin %}
+            <th>Nhân viên</th>
+            {% endif %}
+            <th class="text-center">Thứ 2</th>
+            <th class="text-center">Thứ 3</th>
+            <th class="text-center">Thứ 4</th>
+            <th class="text-center">Thứ 5</th>
+            <th class="text-center">Thứ 6</th>
+            <th class="text-center">Thứ 7</th>
+            <th class="text-center">Chủ nhật</th>
+          </tr>
+        </thead>
+        <tbody>
+          {# Nếu là Admin, lặp qua từng nhân viên, từng tuần #}
+          {% if is_admin %}
+            {% for employee in staff %}
+              {% for week in weeks %}
+              <tr>
+                {# Cột tên nhân viên chỉ hiển thị một lần, rowspan = số tuần #}
+                {% if forloop.first %}
+                <td rowspan="{{ weeks|length }}" style="vertical-align: middle;">
+                  {{ employee.ten_nv }}
+                </td>
+                {% endif %}
+                {% for day in week %}
+                <td class="text-center {% if day and day.weekday >= 5 %}bg-light{% endif %}"
+                    style="height: 100px;">
+                  {% if day %}
+                    <div class="d-flex flex-column h-100">
+                      <div class="mb-1 small">{{ day.day }}</div>
+                      <div class="flex-grow-1">
+                        {% for schedule in schedules %}
+                          {% if schedule.nhan_vien == employee and schedule.ngay_lam == day %}
+                          <div class="p-1 mb-1 rounded schedule-item
+                              {% if schedule.ca_lam == 'sang' %}bg-warning text-dark
+                              {% elif schedule.ca_lam == 'chieu' %}bg-info text-dark
+                              {% else %}bg-danger text-white{% endif %}">
+                            <span class="schedule-short">
+                              {% if schedule.ca_lam == 'sang' %}Sáng: 7h00-15h00
+                              {% elif schedule.ca_lam == 'chieu' %}Chiều: 15h00-23h00
+                              {% else %}Tối: 23h00-7h00{% endif %}
+                            </span>
+                            <button type="button"
+                                    class="btn btn-sm p-0 text-danger ms-1 btn-delete-schedule"
+                                    data-url="{% url 'delete_schedule' schedule.ma_lich %}"
+                                    data-name="{{ employee.ten_nv }}"
+                                    data-date="{{ day }}">
+                              <i class="fas fa-times"></i>
+                            </button>
+                          </div>
+                          {% endif %}
+                        {% endfor %}
+                      </div>
+                    </div>
+                  {% endif %}
+                </td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            {% empty %}
+            <tr>
+              <td colspan="8" class="text-center">
+                Không có nhân viên nào đang làm việc.
+              </td>
+            </tr>
+            {% endfor %}
+
+          {# Nếu là Nhân viên hoặc khách, chỉ hiển thị lịch của chính họ trong calendar chung #}
+          {% else %}
+            {% for week in weeks %}
+            <tr>
+              {% for day in week %}
+              <td class="text-center {% if day and day.weekday >= 5 %}bg-light{% endif %}"
+                  style="height: 100px;">
+                {% if day %}
+                  <div class="d-flex flex-column h-100">
+                    <div class="mb-1 small">{{ day.day }}</div>
+                    <div class="flex-grow-1">
+                      {% for schedule in schedules %}
+                        {% if schedule.ngay_lam == day %}
+                        <div class="p-1 mb-1 rounded schedule-item
+                            {% if schedule.ca_lam == 'sang' %}bg-warning text-dark
+                            {% elif schedule.ca_lam == 'chieu' %}bg-info text-dark
+                            {% else %}bg-danger text-white{% endif %}">
+                          <span class="schedule-short">
+                            {% if schedule.ca_lam == 'sang' %}Sáng: 7h00-15h00
+                            {% elif schedule.ca_lam == 'chieu' %}Chiều: 15h00-23h00
+                            {% else %}Tối: 23h00-7h00{% endif %}
+                          </span>
+                          <span class="text-danger ms-1 disabled-link">
+                            <i class="fas fa-times"></i>
+                          </span>
+                        </div>
                         {% endif %}
-                        <th class="text-center">Thứ 2</th>
-                        <th class="text-center">Thứ 3</th>
-                        <th class="text-center">Thứ 4</th>
-                        <th class="text-center">Thứ 5</th>
-                        <th class="text-center">Thứ 6</th>
-                        <th class="text-center">Thứ 7</th>
-                        <th class="text-center">Chủ nhật</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% if is_admin %}
-                        {% for employee in staff %}
-                            {% for week in weeks %}
-                            <tr>
-                                {% if forloop.first %}
-                                <td rowspan="{{ weeks|length }}"
-                                    style="vertical-align: middle;">
-                                    {{ employee.ten_nv }}
-                                </td>
-                                {% endif %}
-                                {% for day in week %}
-                                <td class="text-center {% if day and day.weekday >= 5 %}bg-light{% endif %}"
-                                    style="height: 100px;">
-                                    {% if day %}
-                                        <div class="d-flex flex-column h-100">
-                                            <div class="mb-1 small">{{ day.day }}</div>
-                                            <div class="flex-grow-1">
-                                                {% for schedule in schedules %}
-                                                    {% if schedule.nhan_vien == employee and schedule.ngay_lam == day %}
-                                                    <div class="p-1 mb-1 rounded schedule-item
-                                                        {% if schedule.ca_lam == 'sang' %}bg-warning text-dark
-                                                        {% elif schedule.ca_lam == 'chieu' %}bg-info text-dark
-                                                        {% else %}bg-danger text-white{% endif %}">
-                                                        <span class="schedule-short">
-                                                            {% if schedule.ca_lam == 'sang' %}Sáng: 7h00-15h00
-                                                            {% elif schedule.ca_lam == 'chieu' %}Chiều: 15h00-23h00
-                                                            {% else %}Tối: 23h00-7h00{% endif %}
-                                                        </span>
-                                                        {# Nút mở modal xác nhận xóa lịch #}
-                                                        <button type="button"
-                                                                class="btn btn-sm p-0 text-danger ms-1 btn-delete-schedule"
-                                                                data-url="{% url 'delete_schedule' schedule.ma_lich %}"
-                                                                data-name="{{ employee.ten_nv }}"
-                                                                data-date="{{ day }}">
-                                                            <i class="fas fa-times"></i>
-                                                        </button>
-                                                    </div>
-                                                    {% endif %}
-                                                {% endfor %}
-                                            </div>
-                                        </div>
-                                    {% endif %}
-                                </td>
-                                {% endfor %}
-                            </tr>
-                            {% endfor %}
-                        {% empty %}
-                        <tr>
-                            <td colspan="8" class="text-center">
-                                Không có nhân viên nào đang làm việc.
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    {% else %}
-                        {% for week in weeks %}
-                        <tr>
-                            {% for day in week %}
-                            <td class="text-center {% if day and day.weekday >= 5 %}bg-light{% endif %}"
-                                style="height: 100px;">
-                                {% if day %}
-                                    <div class="d-flex flex-column h-100">
-                                        <div class="mb-1 small">{{ day.day }}</div>
-                                        <div class="flex-grow-1">
-                                            {% for schedule in schedules %}
-                                                {% if schedule.ngay_lam == day %}
-                                                <div class="p-1 mb-1 rounded schedule-item
-                                                    {% if schedule.ca_lam == 'sang' %}bg-warning text-dark
-                                                    {% elif schedule.ca_lam == 'chieu' %}bg-info text-dark
-                                                    {% else %}bg-danger text-white{% endif %}">
-                                                    <span class="schedule-short">
-                                                        {% if schedule.ca_lam == 'sang' %}Sáng: 7h00-15h00
-                                                        {% elif schedule.ca_lam == 'chieu' %}Chiều: 15h00-23h00
-                                                        {% else %}Tối: 23h-7h00{% endif %}
-                                                    </span>
-                                                    <span class="text-danger ms-1 disabled-link">
-                                                        <i class="fas fa-times"></i>
-                                                    </span>
-                                                </div>
-                                                {% endif %}
-                                            {% endfor %}
-                                        </div>
-                                    </div>
-                                {% endif %}
-                            </td>
-                            {% endfor %}
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="7" class="text-center">
-                                Không có lịch làm việc nào trong tháng này.
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    {% endif %}
-                </tbody>
-            </table>
-        </div>
+                      {% endfor %}
+                    </div>
+                  </div>
+                {% endif %}
+              </td>
+              {% endfor %}
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="text-center">
+                Không có lịch làm việc nào trong tháng này.
+              </td>
+            </tr>
+            {% endfor %}
+          {% endif %}
+        </tbody>
+      </table>
     </div>
+  </div>
 </div>
 
-{# Modal Thêm lịch làm việc (giữ nguyên) #}
+{# ──────────────────────────────────────────────────────────────────────────── #}
+{# 1) Modal Thêm lịch làm việc (chỉ Admin mới thấy)                            #}
+{# ──────────────────────────────────────────────────────────────────────────── #}
 {% if is_admin %}
 <div class="modal fade" id="addScheduleModal" tabindex="-1"
      aria-labelledby="addScheduleModalLabel" aria-hidden="true">
-  <!-- ... form thêm lịch ... -->
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <h5 class="modal-title" id="addScheduleModalLabel">
+          <i class="fas fa-calendar-plus me-2"></i>Thêm lịch làm việc
+        </h5>
+        <button type="button" class="btn-close"
+                data-bs-dismiss="modal" aria-label="Đóng"></button>
+      </div>
+
+      {# Form POST về cùng view admin_schedule_management #}
+      <form method="post" action="">
+        {% csrf_token %}
+        <div class="modal-body">
+          {# Hiển thị tất cả messages (nếu có lỗi hoặc success) #}
+          {% if messages %}
+            {% for msg in messages %}
+              <div class="alert alert-{{ msg.tags }} py-1 px-2 mb-2 small">
+                {{ msg }}
+              </div>
+            {% endfor %}
+          {% endif %}
+
+          {# Mỗi trường được chia thành row: label bên trái, input bên phải #}
+          <div class="row mb-3">
+            <label for="{{ form.nhan_vien.id_for_label }}" class="col-sm-4 col-form-label">
+              Nhân viên:
+            </label>
+            <div class="col-sm-8">
+              {{ form.nhan_vien }}
+              {% if form.nhan_vien.errors %}
+                <div class="text-danger small mt-1">
+                  {{ form.nhan_vien.errors.0 }}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <label for="{{ form.ngay_lam.id_for_label }}" class="col-sm-4 col-form-label">
+              Ngày làm việc:
+            </label>
+            <div class="col-sm-8">
+              {{ form.ngay_lam }}
+              {% if form.ngay_lam.errors %}
+                <div class="text-danger small mt-1">
+                  {{ form.ngay_lam.errors.0 }}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <label for="{{ form.ca_lam.id_for_label }}" class="col-sm-4 col-form-label">
+              Ca làm:
+            </label>
+            <div class="col-sm-8">
+              {{ form.ca_lam }}
+              {% if form.ca_lam.errors %}
+                <div class="text-danger small mt-1">
+                  {{ form.ca_lam.errors.0 }}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <label for="{{ form.ghi_chu.id_for_label }}" class="col-sm-4 col-form-label">
+              Ghi chú (không bắt buộc):
+            </label>
+            <div class="col-sm-8">
+              {{ form.ghi_chu }}
+              {% if form.ghi_chu.errors %}
+                <div class="text-danger small mt-1">
+                  {{ form.ghi_chu.errors.0 }}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary"
+                  data-bs-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-primary">Lưu lịch</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 {% endif %}
 
-
-{# Modal Xác nhận xóa lịch làm việc #}
+{# ──────────────────────────────────────────────────────────────────────────── #}
+{# 2) Modal Xác nhận xóa lịch làm việc (giữ nguyên)                            #}
+{# ──────────────────────────────────────────────────────────────────────────── #}
 <div class="modal fade" id="deleteScheduleModal" tabindex="-1"
      aria-labelledby="deleteScheduleModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -181,10 +283,12 @@
 </div>
 {% endblock %}
 
+
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // Modal xóa lịch
+  // ──────────────────────────────────────────────────────────────────
+  // 1) Xử lý Modal Xóa lịch
   var delModalEl  = document.getElementById('deleteScheduleModal'),
       delModal    = new bootstrap.Modal(delModalEl),
       bodyEl      = delModalEl.querySelector('#deleteScheduleModalBody'),
@@ -204,7 +308,20 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // Giữ nguyên script thêm lịch...
+  // ──────────────────────────────────────────────────────────────────
+  // 2) Khi Modal Thêm lịch được mở, reset form và set ngày hôm nay
+  var addModalEl = document.getElementById('addScheduleModal');
+  if (addModalEl) {
+    addModalEl.addEventListener('show.bs.modal', function () {
+      var form = addModalEl.querySelector('form');
+      form.reset();
+      var dateInput = form.querySelector('#' + '{{ form.ngay_lam.id_for_label }}');
+      if (dateInput) {
+        var today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
+      }
+    });
+  }
 });
 </script>
 {% endblock %}

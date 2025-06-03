@@ -353,6 +353,7 @@
             </a>
             <ul id="staffManagement"
                 class="sidebar-nav-dropdown {% if request.resolver_match.url_name == 'admin_staff_management' or request.resolver_match.url_name == 'admin_schedule_management' %}show{% endif %}">
+                {% if is_admin %}
                 <li>
                     <a href="{% url 'admin_staff_management' %}"
                        class="sidebar-nav-dropdown-link {% if request.resolver_match.url_name == 'admin_staff_management' %}active{% endif %}"
@@ -360,6 +361,7 @@
                         Thông tin nhân viên
                     </a>
                 </li>
+                {% endif %}
                 <li>
                     <a href="{% url 'admin_schedule_management' %}"
                        class="sidebar-nav-dropdown-link {% if request.resolver_match.url_name == 'admin_schedule_management' %}active{% endif %}"

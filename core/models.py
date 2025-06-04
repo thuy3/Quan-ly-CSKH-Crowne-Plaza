@@ -51,26 +51,27 @@ class DichVu(models.Model):
     ma_dv = models.AutoField(primary_key=True)
     ten_dv = models.CharField(max_length=50)
     mo_ta = models.TextField()
-    phi_dv = models.FloatField(validators=[MinValueValidator(0)])
+    phi_dv = models.FloatField(validators=[MinValueValidator(0)]) # đảm bảo giá trị phải lớn hơn bằng 0.
     anh_dai_dien = models.ImageField(upload_to='dich_vu/')
-    hoat_dong = models.BooleanField(default=True)
+    hoat_dong = models.BooleanField(default=True)# đánh dấu dịch vụ còn hoạt động hay kh ( mặc định có)
 
     def __str__(self):
         return self.ten_dv
 
 
 class KhachHang(models.Model):
-    ma_kh = models.AutoField(primary_key=True)
-    tai_khoan = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    ma_kh = models.AutoField(primary_key=True) # khóa chính tự động tăng
+    tai_khoan = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE) # khóa ngoại ràng buộc 1:1 với models TaiKhoan của accounts, đảm bảo khi khachhang bị xóa thì taikhoan cũng sẽ bị xóa.
     ten_kh = models.CharField(max_length=50)
     sdt = models.CharField(max_length=10)
     email = models.EmailField()
     dia_chi = models.TextField()
-    anh_dai_dien = models.ImageField(upload_to='khach_hang/', null=True, blank=True)
-    ghi_chu = models.TextField(blank=True)
+    anh_dai_dien = models.ImageField(upload_to='khach_hang/', null=True, blank=True) # cho phép khách hàng có thể không có ảnh, và để trống không thêm ảnh vào khi tạo tài khoản.
+    #upload to khach_hang có nghĩa là sẽ khi tải ảnh lên sẽ upload đến MEDIA_ROOT/khach_hang mà MEDIA_ROOT = BASE_DIR / 'media' nghĩa là ảnh sẽ được đẩy đến media/khach_hang
+    ghi_chu = models.TextField(blank=True)# cho phép khách hàng để trống ghi chú.
 
     def __str__(self):
-        return self.ten_kh
+        return self.ten_kh # cho phép hiển thị tên khách hàng dễ đọc khi in .
 
 
 class NhanVien(models.Model):
@@ -157,10 +158,10 @@ class DonDatDichVu(models.Model):
     ngay_su_dung = models.DateField()
     gio_su_dung = models.TimeField()
     so_luong = models.PositiveIntegerField(default=1)
-    thanh_tien = models.FloatField(validators=[MinValueValidator(0)])
+    thanh_tien = models.FloatField(validators=[MinValueValidator(0)]) # được tính trong phương thức save(), giá trị phải lớn hơn hoặc bằng 0.
     ghi_chu = models.TextField(blank=True)
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs): #ghi đè phương thức save để tính giá tiền dịch vụ
         self.thanh_tien = self.dich_vu.phi_dv * self.so_luong
         super().save(*args, **kwargs)
 

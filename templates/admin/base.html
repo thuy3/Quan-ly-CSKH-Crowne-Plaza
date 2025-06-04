@@ -2,487 +2,546 @@
 {% load static %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+/>
 <style>
     :root {
-        --sidebar-width: 250px;
-        --navbar-height: 60px;
+        /* Primary Colors */
         --primary-color: #3498db;
         --secondary-color: #2c3e50;
-        --light-color: #ecf0f1;
-        --dark-color: #34495e;
-        --success-color: #2ecc71;
-        --danger-color: #e74c3c;
-        --warning-color: #f39c12;
+
+        /* Text Colors */
+        --text-dark: #212529;
+        --text-light: #ffffff;
+        --text-muted: #6c757d;
+
+        /* Backgrounds */
+        --bg-light: #f4f6f8;
+        --bg-white: #ffffff;
+        --bg-white-transparent: rgba(255, 255, 255, 0.6); /* <<<< ĐỘ TRONG SUỐT 60% CHO MÀU TRẮNG */
+
+        /* Sidebar */
+        --sidebar-width: 260px;
+        --sidebar-bg: #B3DFFF;
+        --sidebar-text-color: var(--secondary-color);
+        --sidebar-brand-text-color: #212f3c;
+        --sidebar-brand-border: rgba(44, 62, 80, 0.15);
+
+        /* --- Sidebar Link States - ACTIVE GIỐNG HỆT HOVER (Nền trắng trong suốt 60%) --- */
+        --sidebar-link-default-text: var(--secondary-color);
+        --sidebar-link-default-font-weight: 500;
+
+        /* Hover State */
+        --sidebar-link-hover-bg: var(--bg-white-transparent); /* Sử dụng màu trắng trong suốt 60% */
+        --sidebar-link-hover-text: var(--text-dark);
+        --sidebar-link-hover-border: var(--primary-color);
+
+        /* Active State - Sẽ giống hệt Hover State */
+        --sidebar-active-bg: var(--sidebar-link-hover-bg);       /* Nền trắng trong suốt 60% */
+        --sidebar-active-text: var(--sidebar-link-hover-text);   /* Chữ đen */
+        --sidebar-active-border: var(--sidebar-link-hover-border); /* Viền xanh chủ đạo */
+        --sidebar-active-font-weight: 600;
+
+        /* Sidebar Dropdown Link */
+        --sidebar-dropdown-link-text-color: #566573;
+        --sidebar-dropdown-link-default-font-weight: 400;
+
+        /* Hover State for Dropdown */
+        --sidebar-dropdown-link-hover-bg: var(--bg-white-transparent); /* Sử dụng màu trắng trong suốt 60% */
+        --sidebar-dropdown-link-hover-text: var(--text-dark);
+
+        /* Active State for Dropdown - Sẽ giống hệt Hover State */
+        --sidebar-dropdown-link-active-bg: var(--sidebar-dropdown-link-hover-bg);   /* Nền trắng trong suốt 60% */
+        --sidebar-dropdown-link-active-text: var(--sidebar-dropdown-link-hover-text); /* Chữ đen */
+        --sidebar-dropdown-link-active-font-weight: 600;
+
+        /* Navbar */
+        --navbar-height: 60px;
+        --navbar-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+        /* General UI */
+        --border-color: #dfe4e8;
+        --card-shadow: 0 1px 5px rgba(0, 0, 0, 0.04);
     }
 
     body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background-color: #f5f5f5;
+        font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: var(--bg-light);
+        margin: 0;
+        color: var(--text-dark);
     }
 
+    /*--- Sidebar ---*/
     .sidebar {
         width: var(--sidebar-width);
         height: 100vh;
         position: fixed;
         top: 0;
         left: 0;
-        background-color: var(--secondary-color);
-        color: white;
-        transition: all 0.3s;
+        background-color: var(--sidebar-bg);
+        color: var(--sidebar-text-color);
+        padding-top: 1.5rem;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.08);
+        transition: transform 0.3s ease-in-out;
         z-index: 1000;
+        border-right: 1px solid var(--border-color);
+    }
+    .sidebar.show {
+        transform: translateX(0);
     }
 
     .sidebar-brand {
-        padding: 1.5rem 1rem;
-        font-size: 1.2rem;
-        font-weight: bold;
+        padding: 1rem 1.5rem;
+        font-size: 1.4rem;
+        font-weight: 700;
         text-align: center;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 1rem;
+        border-bottom: 1px solid var(--sidebar-brand-border);
+        color: var(--sidebar-brand-text-color);
     }
 
     .sidebar-nav {
-        padding: 0;
         list-style: none;
+        padding: 0 1rem;
+        margin: 0;
     }
 
     .sidebar-nav-item {
-        position: relative;
+        margin-bottom: 0.25rem;
     }
 
     .sidebar-nav-link {
         display: flex;
         align-items: center;
-        padding: 0.8rem 1rem;
-        color: rgba(255, 255, 255, 0.7);
+        padding: 0.85rem calc(1rem - 3px) 0.85rem 1rem;
+        color: var(--sidebar-link-default-text);
         text-decoration: none;
-        transition: all 0.3s;
+        border-radius: 0.3rem;
+        border-left: 3px solid transparent;
+        transition: background-color 0.2s ease, color 0.2s ease, border-left-color 0.2s ease, font-weight 0.2s ease;
+        font-weight: var(--sidebar-link-default-font-weight);
     }
 
-    .sidebar-nav-link:hover,
+    .sidebar-nav-link:hover {
+        background-color: var(--sidebar-link-hover-bg);
+        color: var(--sidebar-link-hover-text);
+        border-left-color: var(--sidebar-link-hover-border);
+    }
+
     .sidebar-nav-link.active {
-        color: white;
-        background-color: rgba(255, 255, 255, 0.5);
+        background-color: var(--sidebar-active-bg);
+        color: var(--sidebar-active-text);
+        border-left-color: var(--sidebar-active-border);
+        font-weight: var(--sidebar-active-font-weight);
     }
 
     .sidebar-nav-link i {
-        margin-right: 0.5rem;
+        margin-right: 1rem;
         width: 20px;
         text-align: center;
+        font-size: 1.1rem;
+        transition: color 0.2s ease;
+    }
+    .sidebar-nav-link:hover i {
+        color: var(--text-dark);
+    }
+    .sidebar-nav-link.active i {
+         color: var(--text-dark);
+    }
+
+
+    .sidebar-nav-link .fa-angle-down {
+        margin-left: auto;
+        transition: transform 0.3s ease;
+        font-size: 0.9rem;
+    }
+    .sidebar-nav-link[aria-expanded="true"] .fa-angle-down {
+        transform: rotate(180deg);
     }
 
     .sidebar-nav-dropdown {
-        padding-left: 2rem;
         list-style: none;
+        padding-left: calc(1.25rem + 3px);
         max-height: 0;
         overflow: hidden;
-        transition: all 0.3s;
+        transition: max-height 0.3s ease-out;
+        margin-top: 0.1rem;
+        margin-bottom: 0.25rem;
+        border-radius: 0.25rem;
     }
-
     .sidebar-nav-dropdown.show {
         max-height: 500px;
     }
 
     .sidebar-nav-dropdown-link {
         display: block;
-        padding: 0.5rem 1rem;
-        color: rgba(255, 255, 255, 0.6);
+        padding: 0.6rem 1rem;
+        color: var(--sidebar-dropdown-link-text-color);
         text-decoration: none;
-        transition: all 0.3s;
+        border-radius: 0.25rem;
+        transition: background-color 0.2s ease, color 0.2s ease, font-weight 0.2s ease;
+        font-size: 0.9rem;
+        position: relative;
+        font-weight: var(--sidebar-dropdown-link-default-font-weight);
     }
 
-    .sidebar-nav-dropdown-link:hover,
+    .sidebar-nav-dropdown-link:hover {
+        background-color: var(--sidebar-dropdown-link-hover-bg);
+        color: var(--sidebar-dropdown-link-hover-text);
+    }
+
     .sidebar-nav-dropdown-link.active {
-        color: white;
+        color: var(--sidebar-dropdown-link-active-text);
+        background-color: var(--sidebar-dropdown-link-active-bg);
+        font-weight: var(--sidebar-dropdown-link-active-font-weight);
     }
 
+    /*--- Main Content, Navbar, Breadcrumb, Utilities, Responsive ---*/
     .main-content {
         margin-left: var(--sidebar-width);
         padding-top: var(--navbar-height);
         min-height: 100vh;
-        transition: all 0.3s;
+        transition: margin-left 0.3s ease-in-out;
+        background-color: var(--bg-light);
     }
 
     .navbar {
         height: var(--navbar-height);
         position: fixed;
         top: 0;
-        right: 0;
         left: var(--sidebar-width);
-        z-index: 1030;
-        background-color: white;
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        right: 0;
+        background-color: var(--bg-white);
+        box-shadow: var(--navbar-shadow);
+        z-index: 1100;
+        display: flex;
+        align-items: center;
+        padding: 0 1.5rem;
+        transition: left 0.3s ease-in-out;
     }
 
     .breadcrumb {
         background-color: transparent;
         padding: 0;
-    }
-
-    .card {
-        border: none;
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
         margin-bottom: 1.5rem;
+        font-size: 0.9rem;
     }
-
-    .card-header {
-        background-color: white;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.125);
-        font-weight: bold;
+    .breadcrumb-item a {
+        color: var(--text-muted);
+        text-decoration: none;
     }
-
-    .table th {
-        border-top: none;
-        font-weight: 600;
+    .breadcrumb-item a:hover {
+        color: var(--primary-color);
     }
-
-    .status-badge {
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.25rem;
-        font-size: 0.75rem;
-        font-weight: 600;
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: var(--bs-breadcrumb-divider, "/");
+        color: var(--text-muted);
     }
-
-    .badge-waiting {
-        background-color: #fff3cd;
-        color: #856404;
-    }
-
-    .badge-confirmed {
-        background-color: #d4edda;
-        color: #155724;
-    }
-
-    .badge-checked-in {
-        background-color: #cce5ff;
-        color: #004085;
-    }
-
-    .badge-checked-out {
-        background-color: #e2e3e5;
-        color: #383d41;
-    }
-
-    .badge-cancelled {
-        background-color: #f8d7da;
-        color: #721c24;
+    .breadcrumb-item.active {
+        color: var(--text-dark);
+        font-weight: 500;
     }
 
     .avatar {
-        width: 30px;
-        height: 30px;
+        width: 38px;
+        height: 38px;
         border-radius: 50%;
         object-fit: cover;
+        border: 2px solid var(--border-color);
     }
 
-    .pagination .page-item.active .page-link {
-        background-color: var(--primary-color);
-        border-color: var(--primary-color);
+    .dropdown-menu {
+        border-radius: 0.5rem;
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--border-color);
+    }
+    .dropdown-item i {
+        width: 20px;
     }
 
-    .pagination .page-link {
-        color: var(--primary-color);
-    }
-
-    .search-box {
-        max-width: 300px;
-    }
-
-    .filter-select {
-        max-width: 200px;
-    }
-
-    .stats-card {
-        border-left: 4px solid;
-        transition: all 0.3s;
-    }
-
-    .stats-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-    }
-
-    .stats-card.primary {
-        border-left-color: var(--primary-color);
-    }
-
-    .stats-card.success {
-        border-left-color: var(--success-color);
-    }
-
-    .stats-card.warning {
-        border-left-color: var(--warning-color);
-    }
-
-    .stats-card.danger {
-        border-left-color: var(--danger-color);
-    }
-
-    .recent-item {
-        border-left: 3px solid;
-        padding-left: 1rem;
-        margin-bottom: 1rem;
-    }
-
-    .recent-item.primary {
-        border-left-color: var(--primary-color);
-    }
-
-    .recent-item.success {
-        border-left-color: var(--success-color);
-    }
-
-    .recent-item.warning {
-        border-left-color: var(--warning-color);
-    }
-
-    .calendar-day {
-        border: 1px solid #dee2e6;
-        height: 120px;
-        overflow-y: auto;
-    }
-
-    .calendar-day-header {
-        background-color: #f8f9fa;
-        padding: 0.25rem;
-        font-weight: bold;
-        text-align: center;
-    }
-
-    .shift-morning {
-        background-color: #ffeeba;
-        color: #856404;
-    }
-
-    .shift-afternoon {
-        background-color: #bee5eb;
-        color: #0c5460;
-    }
-
-    .shift-evening {
-        background-color: #f5c6cb;
-        color: #721c24;
-    }
-
-    @media (max-width: 768px) {
+    @media (max-width: 992px) {
         .sidebar {
             transform: translateX(-100%);
         }
-
         .sidebar.show {
             transform: translateX(0);
         }
-
         .main-content {
             margin-left: 0;
         }
-
         .navbar {
             left: 0;
         }
     }
+
+    .btn-link {
+        color: var(--text-dark);
+        transition: color 0.2s ease;
+    }
+    .btn-link:hover {
+        color: var(--primary-color);
+    }
 </style>
-{% endblock extra_css %}
+{% endblock %}
 
 
 {% block content %}
-<div class="sidebar" style="background-color: #B3DFFF; color: black;">
+<div class="sidebar" id="sidebar">
     <div class="sidebar-brand">
         <i class="fas fa-hotel me-2"></i>
         <span>Hotel Admin</span>
     </div>
     <ul class="sidebar-nav">
-        {# --- Trang chủ --- #}
+
         <li class="sidebar-nav-item">
-            <a href="{% url 'admin_dashboard' %}"
-               class="sidebar-nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}"
-               style="color: black; font-weight: bold;">
+            <a
+              href="{% url 'admin_dashboard' %}"
+              class="sidebar-nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}"
+            >
                 <i class="fas fa-tachometer-alt"></i>
                 <span>Trang chủ</span>
             </a>
         </li>
 
-        {# --- Quản lý đặt phòng --- #}
         <li class="sidebar-nav-item">
-            <a href="#roomManagement"
-               class="sidebar-nav-link {% if request.resolver_match.url_name == 'admin_room_management' or request.resolver_match.url_name == 'admin_booking_management' %}active{% endif %}"
-               data-bs-toggle="collapse"
-               style="color: black; font-weight: bold;">
+            <a
+              href="#roomManagement"
+              class="sidebar-nav-link
+                     {% if 'room_management' in request.resolver_match.url_name or 'booking_management' in request.resolver_match.url_name %}
+                       active
+                     {% endif %}"
+              data-bs-toggle="collapse"
+              role="button"
+              aria-expanded="{% if 'room_management' in request.resolver_match.url_name or 'booking_management' in request.resolver_match.url_name %}true{% else %}false{% endif %}"
+            >
                 <i class="fas fa-bed"></i>
                 <span>Quản lý đặt phòng</span>
-                <i class="fas fa-angle-down ms-auto"></i>
+                <i class="fas fa-angle-down"></i>
             </a>
-            <ul id="roomManagement"
-                class="sidebar-nav-dropdown {% if request.resolver_match.url_name == 'admin_room_management' or request.resolver_match.url_name == 'admin_booking_management' %}show{% endif %}">
+            <ul
+              id="roomManagement"
+              class="sidebar-nav-dropdown
+                     {% if 'room_management' in request.resolver_match.url_name or 'booking_management' in request.resolver_match.url_name %}
+                       show
+                     {% endif %}"
+            >
                 <li>
-                    <a href="{% url 'admin_room_management' %}"
-                       class="sidebar-nav-dropdown-link {% if request.resolver_match.url_name == 'admin_room_management' %}active{% endif %}"
-                       style="color: black; font-weight: bold;">
+                    <a
+                      href="{% url 'admin_room_management' %}"
+                      class="sidebar-nav-dropdown-link {% if request.resolver_match.url_name == 'admin_room_management' %}active{% endif %}"
+                    >
                         Danh sách phòng
                     </a>
                 </li>
                 <li>
-                    <a href="{% url 'admin_booking_management' %}"
-                       class="sidebar-nav-dropdown-link {% if request.resolver_match.url_name == 'admin_booking_management' %}active{% endif %}"
-                       style="color: black; font-weight: bold;">
+                    <a
+                      href="{% url 'admin_booking_management' %}"
+                      class="sidebar-nav-dropdown-link {% if request.resolver_match.url_name == 'admin_booking_management' %}active{% endif %}"
+                    >
                         Lịch sử đặt phòng
                     </a>
                 </li>
             </ul>
         </li>
 
-        {# --- Quản lý khách hàng --- #}
         <li class="sidebar-nav-item">
-            <a href="{% url 'admin_customer_management' %}"
-               class="sidebar-nav-link {% if request.resolver_match.url_name == 'admin_customer_management' %}active{% endif %}"
-               style="color: black; font-weight: bold;">
+            <a
+              href="{% url 'admin_customer_management' %}"
+              class="sidebar-nav-link {% if request.resolver_match.url_name == 'admin_customer_management' %}active{% endif %}"
+            >
                 <i class="fas fa-users"></i>
                 <span>Quản lý khách hàng</span>
             </a>
         </li>
 
-        {# --- Quản lý ca làm việc --- #}
         <li class="sidebar-nav-item">
-            <a href="#staffManagement"
-               class="sidebar-nav-link {% if request.resolver_match.url_name == 'admin_staff_management' or request.resolver_match.url_name == 'admin_schedule_management' %}active{% endif %}"
-               data-bs-toggle="collapse"
-               style="color: black; font-weight: bold;">
+            <a
+              href="#staffManagement"
+              class="sidebar-nav-link
+                     {% if 'staff_management' in request.resolver_match.url_name or 'schedule_management' in request.resolver_match.url_name %}
+                       active
+                     {% endif %}"
+              data-bs-toggle="collapse"
+              role="button"
+              aria-expanded="{% if 'staff_management' in request.resolver_match.url_name or 'schedule_management' in request.resolver_match.url_name %}true{% else %}false{% endif %}"
+            >
                 <i class="fas fa-user-tie"></i>
                 <span>Quản lý ca làm việc</span>
-                <i class="fas fa-angle-down ms-auto"></i>
+                <i class="fas fa-angle-down"></i>
             </a>
-            <ul id="staffManagement"
-                class="sidebar-nav-dropdown {% if request.resolver_match.url_name == 'admin_staff_management' or request.resolver_match.url_name == 'admin_schedule_management' %}show{% endif %}">
+            <ul
+              id="staffManagement"
+              class="sidebar-nav-dropdown
+                     {% if 'staff_management' in request.resolver_match.url_name or 'schedule_management' in request.resolver_match.url_name %}
+                       show
+                     {% endif %}"
+            >
                 {% if is_admin %}
                 <li>
-                    <a href="{% url 'admin_staff_management' %}"
-                       class="sidebar-nav-dropdown-link {% if request.resolver_match.url_name == 'admin_staff_management' %}active{% endif %}"
-                       style="color: black; font-weight: bold;">
+                    <a
+                      href="{% url 'admin_staff_management' %}"
+                      class="sidebar-nav-dropdown-link {% if request.resolver_match.url_name == 'admin_staff_management' %}active{% endif %}"
+                    >
                         Thông tin nhân viên
                     </a>
                 </li>
                 {% endif %}
                 <li>
-                    <a href="{% url 'admin_schedule_management' %}"
-                       class="sidebar-nav-dropdown-link {% if request.resolver_match.url_name == 'admin_schedule_management' %}active{% endif %}"
-                       style="color: black; font-weight: bold;">
+                    <a
+                      href="{% url 'admin_schedule_management' %}"
+                      class="sidebar-nav-dropdown-link {% if request.resolver_match.url_name == 'admin_schedule_management' %}active{% endif %}"
+                    >
                         Ca làm việc
                     </a>
                 </li>
             </ul>
         </li>
 
-        {# --- Quản lý dịch vụ --- #}
         <li class="sidebar-nav-item">
-            <a href="#serviceManagement"
-               class="sidebar-nav-link {% if request.resolver_match.url_name == 'admin_service_management' or request.resolver_match.url_name == 'admin_service_booking' %}active{% endif %}"
-               data-bs-toggle="collapse"
-               style="color: black; font-weight: bold;">
+            <a
+              href="{% url 'admin_request_management' %}"
+              class="sidebar-nav-link {% if request.resolver_match.url_name == 'admin_request_management' %}active{% endif %}"
+            >
+                <i class="fas fa-headset"></i>
+                <span>Quản lý hỗ trợ & phản hồi</span>
+            </a>
+        </li>
+
+
+        <li class="sidebar-nav-item">
+            <a
+              href="#serviceManagement"
+              class="sidebar-nav-link
+                     {% if 'service_management' in request.resolver_match.url_name or 'service_booking' in request.resolver_match.url_name %}
+                       active
+                     {% endif %}"
+              data-bs-toggle="collapse"
+              role="button"
+              aria-expanded="{% if 'service_management' in request.resolver_match.url_name or 'service_booking' in request.resolver_match.url_name %}true{% else %}false{% endif %}"
+            >
                 <i class="fas fa-concierge-bell"></i>
                 <span>Quản lý dịch vụ</span>
-                <i class="fas fa-angle-down ms-auto"></i>
+                <i class="fas fa-angle-down"></i>
             </a>
-            <ul id="serviceManagement"
-                class="sidebar-nav-dropdown {% if request.resolver_match.url_name == 'admin_service_management' or request.resolver_match.url_name == 'admin_service_booking' %}show{% endif %}">
+            <ul
+              id="serviceManagement"
+              class="sidebar-nav-dropdown
+                     {% if 'service_management' in request.resolver_match.url_name or 'service_booking' in request.resolver_match.url_name %}
+                       show
+                     {% endif %}"
+            >
                 <li>
-                    <a href="{% url 'admin_service_management' %}"
-                       class="sidebar-nav-dropdown-link {% if request.resolver_match.url_name == 'admin_service_management' %}active{% endif %}"
-                       style="color: black; font-weight: bold;">
+                    <a
+                      href="{% url 'admin_service_management' %}"
+                      class="sidebar-nav-dropdown-link {% if request.resolver_match.url_name == 'admin_service_management' %}active{% endif %}"
+                    >
                         Danh sách dịch vụ
                     </a>
                 </li>
                 <li>
-                    <a href="{% url 'admin_service_booking' %}"
-                       class="sidebar-nav-dropdown-link {% if request.resolver_match.url_name == 'admin_service_booking' %}active{% endif %}"
-                       style="color: black; font-weight: bold;">
+                    <a
+                      href="{% url 'admin_service_booking' %}"
+                      class="sidebar-nav-dropdown-link {% if request.resolver_match.url_name == 'admin_service_booking' %}active{% endif %}"
+                    >
                         Lịch sử đặt dịch vụ
                     </a>
                 </li>
             </ul>
         </li>
 
-        {# --- Đăng xuất --- #}
         <li class="sidebar-nav-item">
-            <a href="{% url 'logout' %}"
-               class="sidebar-nav-link"
-               style="color: black; font-weight: bold;">
+            <a
+              href="{% url 'logout' %}"
+              class="sidebar-nav-link"
+            >
                 <i class="fas fa-sign-out-alt"></i>
                 <span>Đăng xuất</span>
             </a>
         </li>
+
     </ul>
 </div>
 
-
 <div class="main-content">
     <nav class="navbar navbar-expand navbar-light bg-white">
-        <div class="container-fluid">
-            <button class="btn btn-link d-md-none" type="button" id="sidebarToggle">
-                <i class="fas fa-bars"></i>
-            </button>
-
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
-                       data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="{% if user.avatar %}{{ user.avatar.url }}{% else %}{% static 'images/default-avartar.jpg' %}{% endif %}"
-                             class="avatar me-2" alt="Avatar">
-                        <span class="d-none d-md-inline">{{ request.user.get_full_name|default:request.user.username }}</span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                        <li>
-                            <a class="dropdown-item" href="{% url 'profile' %}">
-                                <i class="fas fa-user me-2"></i>Hồ sơ
-                            </a>
-                        </li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <a class="dropdown-item" href="{% url 'logout' %}">
-                                <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-            </ul>
-        </div>
+        <button
+          class="btn btn-link d-lg-none"
+          type="button"
+          id="sidebarToggle"
+          aria-label="Toggle sidebar"
+        >
+            <i class="fas fa-bars"></i>
+        </button>
+        <ul class="navbar-nav ms-auto">
+            <li class="nav-item dropdown">
+                <a
+                  class="nav-link dropdown-toggle d-flex align-items-center"
+                  href="#"
+                  id="navbarDropdown"
+                  role="button"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                    <img
+                      src="{% if user.avatar %}{{ user.avatar.url }}{% else %}{% static 'images/default-avartar.jpg' %}{% endif %}"
+                      class="avatar me-2"
+                      alt="User Avatar"
+                    />
+                    <span class="d-none d-md-inline">
+                        {{ request.user.get_full_name|default:request.user.username }}
+                    </span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                    <li>
+                        <a class="dropdown-item" href="{% url 'profile' %}">
+                            <i class="fas fa-user me-2"></i>Hồ sơ
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider" /></li>
+                    <li>
+                        <a class="dropdown-item" href="{% url 'logout' %}">
+                            <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
+                        </a>
+                    </li>
+                </ul>
+            </li>
+        </ul>
     </nav>
 
     <div class="container-fluid py-4">
         <nav aria-label="breadcrumb" class="mb-4">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}"><i class="fas fa-home"></i></a></li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'admin_dashboard' %}">
+                        <i class="fas fa-home"></i>
+                    </a>
+                </li>
                 {% block breadcrumb %}{% endblock %}
             </ol>
         </nav>
 
-        {% block admin_content %}{% endblock %}
+        {% block admin_content %}
+        {% endblock %}
     </div>
 </div>
-{% endblock content %}
+{% endblock %}
 
 
 {% block extra_js %}
-<script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script>
-    // 1) Toggle sidebar trên mobile
+    // Toggle sidebar on mobile
     document.getElementById('sidebarToggle').addEventListener('click', function() {
-        document.querySelector('.sidebar').classList.toggle('show');
+        document.getElementById('sidebar').classList.toggle('show');
     });
 
-    // 2) Toggle submenu khi bấm vào tiêu đề có data-bs-toggle="collapse"
-    document.querySelectorAll('.sidebar-nav-link[data-bs-toggle="collapse"]').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const target = this.getAttribute('href');   // ví dụ "#roomManagement"
-            const submenu = document.querySelector(target);
-            submenu.classList.toggle('show');
-        });
-    });
-
-    // 3) Khởi tạo tooltip (nếu có)
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    // Initialize Bootstrap tooltips
+    var tooltipTriggerList = [].slice.call(
+        document.querySelectorAll('[data-bs-toggle="tooltip"]')
+    );
+    tooltipTriggerList.map(function(tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
 </script>
-{% endblock extra_js %}
+{% endblock %}

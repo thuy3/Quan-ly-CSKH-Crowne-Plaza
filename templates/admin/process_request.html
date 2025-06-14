@@ -68,9 +68,9 @@
             <div class="mb-3">
                 <label class="form-label">Tình trạng</label>
                 <select name="action" class="form-select">
-                    <option value="assign" {% if yeu_cau.tinh_trang == 'cho_phan_cong' %}selected{% endif %}>Phân công</option>
-                    <option value="processing" {% if yeu_cau.tinh_trang == 'da_phan_cong' %}selected{% endif %}>Đang xử lý</option>
-                    <option value="complete" {% if yeu_cau.tinh_trang == 'dang_xu_ly' %}selected{% endif %}>Hoàn thành</option>
+                    <option value="assign" {% if yeu_cau.tinh_trang =='cho_phan_cong' %}selected{% endif %}>Phân công</option>
+                    <option value="processing" {% if yeu_cau.tinh_trang =='da_phan_cong' %}selected{% endif %}>Đang xử lý</option>
+                    <option value="complete" {% if yeu_cau.tinh_trang =='dang_xu_ly' %}selected{% endif %}>Hoàn thành</option>
                 </select>
             </div>
             <div class="mb-3">

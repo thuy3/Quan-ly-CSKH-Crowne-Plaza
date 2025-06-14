@@ -25,9 +25,9 @@
                 <div class="input-group">
                     <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
                         <option value="">Tất cả trạng thái</option>
-                        <option value="cho_phan_cong" {% if request.GET.status == 'cho_phan_cong' %}selected{% endif %}>Chưa phân công</option>
-                        <option value="da_phan_cong" {% if request.GET.status == 'da_phan_cong' %}selected{% endif %}>Đã phân công</option>
-                        <option value="dang_xu_ly" {% if request.GET.status == 'dang_xu_ly' %}selected{% endif %}>Đang xử lý</option>
+                        <option value="cho_phan_cong" {% if request.GET.status =='cho_phan_cong' %}selected{% endif %}>Chưa phân công</option>
+                        <option value="da_phan_cong" {% if request.GET.status =='da_phan_cong' %}selected{% endif %}>Đã phân công</option>
+                        <option value="dang_xu_ly" {% if request.GET.status =='dang_xu_ly' %}selected{% endif %}>Đang xử lý</option>
                         <option value="da_xu_ly" {% if request.GET.status == 'da_xu_ly' %}selected{% endif %}>Đã xử lý</option>
                     </select>
                     {% if request.GET.q %}

@@ -823,6 +823,182 @@ def delete_request(request, pk):
 
     return redirect('process_request', pk=pk)
 
+
+@login_required
+@user_passes_test(lambda u: u.is_authenticated and getattr(u, 'loai_tk', '').strip().lower() in ['admin', 'nhan_vien'])
+def admin_request_management(request):
+    logger.debug(f"User accessing admin_request_management: {request.user.username}, Role: {getattr(request.user, 'loai_tk', 'N/A')}, Authenticated: {request.user.is_authenticated}")
+    requests_list = YeuCau.objects.all().order_by('-ngay_tao')
+
+    search_query = request.GET.get('q', '')
+    status_filter = request.GET.get('status', '')
+
+    if search_query:
+        requests_list = requests_list.filter(
+            Q(ma_yc__icontains=search_query) |
+            Q(khach_hang__ten_kh__icontains=search_query) |
+            Q(phong__ten_p__icontains=search_query) |
+            Q(noi_dung_yc__icontains=search_query)
+        )
+
+    if status_filter:
+        requests_list = requests_list.filter(tinh_trang=status_filter)
+
+    paginator = Paginator(requests_list, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'page_obj': page_obj,
+        'search_query': search_query,
+        'status_filter': status_filter,
+        'is_admin': request.user.loai_tk == 'admin',
+        'is_staff': request.user.loai_tk == 'nhan_vien',
+    }
+    return render(request, 'admin/request_management.html', context)
+
+@login_required
+@user_passes_test(lambda u: u.is_authenticated and getattr(u, 'loai_tk', '').strip().lower() in ['admin', 'nhan_vien'])
+def process_request(request, pk):
+    logger.debug(f"User accessing process_request: {request.user.username}, Role: {getattr(request.user, 'loai_tk', 'N/A')}, Authenticated: {request.user.is_authenticated}")
+    yeu_cau = get_object_or_404(YeuCau, pk=pk)
+
+    try:
+        staff_profile = NhanVien.objects.get(tai_khoan=request.user) if request.user.loai_tk == 'nhan_vien' else None
+    except NhanVien.DoesNotExist:
+        staff_profile = None
+
+    if request.user.loai_tk == 'nhan_vien' and yeu_cau.nhan_vien and staff_profile and yeu_cau.nhan_vien != staff_profile:
+        messages.error(request, "Bạn không có quyền xử lý yêu cầu này.")
+        return redirect('admin_dashboard')
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        staff_id = request.POST.get('staff')
+        note = request.POST.get('note', '')
+
+        status_changed = False
+        note_changed = (yeu_cau.ghi_chu != note)
+
+        # Chỉ admin được phân công nhân viên
+        if action == 'assign':
+            if request.user.loai_tk != 'admin':
+                messages.error(request, "Bạn không có quyền thực hiện hành động này.")
+                return redirect('process_request', pk=pk)
+            if staff_id:
+                staff_member = get_object_or_404(NhanVien, pk=staff_id)
+                if yeu_cau.nhan_vien != staff_member:
+                    yeu_cau.nhan_vien = staff_member
+                    status_changed = True
+                if yeu_cau.tinh_trang != 'da_phan_cong':
+                    yeu_cau.tinh_trang = 'da_phan_cong'
+                    status_changed = True
+            else:
+                messages.error(request, "Vui lòng chọn nhân viên để phân công.")
+                return redirect('process_request', pk=pk)
+
+        elif action == 'processing':
+            if yeu_cau.tinh_trang != 'dang_xu_ly':
+                yeu_cau.tinh_trang = 'dang_xu_ly'
+                if request.user.loai_tk == 'nhan_vien' and not yeu_cau.nhan_vien and staff_profile:
+                    yeu_cau.nhan_vien = staff_profile
+                status_changed = True
+
+        elif action == 'complete':
+            if yeu_cau.tinh_trang != 'da_xu_ly':
+                yeu_cau.tinh_trang = 'da_xu_ly'
+                yeu_cau.thoi_gian_hoan_thanh = timezone.now()
+                status_changed = True
+
+        elif action == 'cancel':
+            if yeu_cau.tinh_trang != 'da_huy':
+                yeu_cau.tinh_trang = 'da_huy'
+                status_changed = True
+
+        else:
+            if note_changed:
+                yeu_cau.ghi_chu = note
+                yeu_cau.save()
+                messages.success(request, "Đã cập nhật ghi chú cho yêu cầu.")
+            else:
+                messages.info(request, "Không có hành động nào được chọn hoặc không có thay đổi ghi chú.")
+            return redirect('process_request', pk=pk)
+
+        if status_changed or note_changed:
+            yeu_cau.ghi_chu = note
+            yeu_cau.save()
+            messages.success(request, f"Yêu cầu đã được cập nhật: {action}.")
+        else:
+            messages.info(request, "Không có thay đổi nào được thực hiện.")
+
+        return redirect('process_request', pk=pk)
+
+    available_staff = NhanVien.objects.filter(trang_thai='dang_lam') if request.user.loai_tk == 'admin' else []
+
+    context = {
+        'yeu_cau': yeu_cau,
+        'available_staff': available_staff,
+        'is_admin': request.user.loai_tk == 'admin',
+        'is_staff': request.user.loai_tk == 'nhan_vien',
+        'staff_profile': staff_profile,
+    }
+    return render(request, 'admin/process_request.html', context)
+
+
+
+@login_required
+@user_passes_test(is_customer)
+def customer_requests(request):
+    if not hasattr(request.user, 'khachhang'):
+        messages.error(request, "Bạn không có quyền truy cập mục này.")
+        return redirect('home')
+
+    confirmed_bookings = DonDatPhong.objects.filter(
+        khach_hang=request.user.khachhang,
+        trang_thai__in=['da_xac_nhan', 'da_checkin']
+    ).order_by('-ngay_dat')
+
+    context = {
+        'bookings': confirmed_bookings,
+    }
+    return render(request, 'core/customer_requests.html', context)
+
+@login_required
+@user_passes_test(is_customer)
+def request_detail(request, booking_pk):
+    booking = get_object_or_404(DonDatPhong, pk=booking_pk)
+
+    if not hasattr(request.user, 'khachhang') or booking.khach_hang != request.user.khachhang:
+        messages.error(request, "Bạn không có quyền truy cập mục này.")
+        return redirect('home')
+
+    customer_requests_list = YeuCau.objects.filter(
+        phong=booking.phong,
+        khach_hang=request.user.khachhang
+    ).order_by('-ngay_tao')
+
+    if request.method == 'POST':
+        form = YeuCauForm(request.POST)
+        if form.is_valid():
+            yeu_cau = form.save(commit=False)
+            yeu_cau.khach_hang = request.user.khachhang
+            yeu_cau.phong = booking.phong
+            yeu_cau.save()
+            messages.success(request, "Đã gửi yêu cầu thành công.")
+            return redirect('request_detail', booking_pk=booking_pk)
+        else:
+            messages.error(request, "Vui lòng kiểm tra lại thông tin yêu cầu.")
+    else:
+        form = YeuCauForm(initial={'phong': booking.phong})
+
+    context = {
+        'booking': booking,
+        'requests': customer_requests_list,
+        'form': form,
+    }
+    return render(request, 'core/request_detail.html', context)
+
+
 # ------------------- Admin/Staff Shared Views (Admin and Staff with Restrictions) -------------------
 
 @login_required
@@ -1130,125 +1306,6 @@ def delete_schedule(request, pk):
     }
     return render(request, 'admin/delete_schedule.html', context)
 
-@login_required
-@user_passes_test(lambda u: u.is_authenticated and getattr(u, 'loai_tk', '').strip().lower() in ['admin', 'nhan_vien'])
-def admin_request_management(request):
-    logger.debug(f"User accessing admin_request_management: {request.user.username}, Role: {getattr(request.user, 'loai_tk', 'N/A')}, Authenticated: {request.user.is_authenticated}")
-    requests_list = YeuCau.objects.all().order_by('-ngay_tao')
-
-    search_query = request.GET.get('q', '')
-    status_filter = request.GET.get('status', '')
-
-    if search_query:
-        requests_list = requests_list.filter(
-            Q(ma_yc__icontains=search_query) |
-            Q(khach_hang__ten_kh__icontains=search_query) |
-            Q(phong__ten_p__icontains=search_query) |
-            Q(noi_dung_yc__icontains=search_query)
-        )
-
-    if status_filter:
-        requests_list = requests_list.filter(tinh_trang=status_filter)
-
-    paginator = Paginator(requests_list, 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    context = {
-        'page_obj': page_obj,
-        'search_query': search_query,
-        'status_filter': status_filter,
-        'is_admin': request.user.loai_tk == 'admin',
-        'is_staff': request.user.loai_tk == 'nhan_vien',
-    }
-    return render(request, 'admin/request_management.html', context)
-
-@login_required
-@user_passes_test(lambda u: u.is_authenticated and getattr(u, 'loai_tk', '').strip().lower() in ['admin', 'nhan_vien'])
-def process_request(request, pk):
-    logger.debug(f"User accessing process_request: {request.user.username}, Role: {getattr(request.user, 'loai_tk', 'N/A')}, Authenticated: {request.user.is_authenticated}")
-    yeu_cau = get_object_or_404(YeuCau, pk=pk)
-
-    try:
-        staff_profile = NhanVien.objects.get(tai_khoan=request.user) if request.user.loai_tk == 'nhan_vien' else None
-    except NhanVien.DoesNotExist:
-        staff_profile = None
-
-    if request.user.loai_tk == 'nhan_vien' and yeu_cau.nhan_vien and staff_profile and yeu_cau.nhan_vien != staff_profile:
-        messages.error(request, "Bạn không có quyền xử lý yêu cầu này.")
-        return redirect('admin_dashboard')
-
-    if request.method == 'POST':
-        action = request.POST.get('action')
-        staff_id = request.POST.get('staff')
-        note = request.POST.get('note', '')
-
-        status_changed = False
-        note_changed = (yeu_cau.ghi_chu != note)
-
-        # Chỉ admin được phân công nhân viên
-        if action == 'assign':
-            if request.user.loai_tk != 'admin':
-                messages.error(request, "Bạn không có quyền thực hiện hành động này.")
-                return redirect('process_request', pk=pk)
-            if staff_id:
-                staff_member = get_object_or_404(NhanVien, pk=staff_id)
-                if yeu_cau.nhan_vien != staff_member:
-                    yeu_cau.nhan_vien = staff_member
-                    status_changed = True
-                if yeu_cau.tinh_trang != 'da_phan_cong':
-                    yeu_cau.tinh_trang = 'da_phan_cong'
-                    status_changed = True
-            else:
-                messages.error(request, "Vui lòng chọn nhân viên để phân công.")
-                return redirect('process_request', pk=pk)
-
-        elif action == 'processing':
-            if yeu_cau.tinh_trang != 'dang_xu_ly':
-                yeu_cau.tinh_trang = 'dang_xu_ly'
-                if request.user.loai_tk == 'nhan_vien' and not yeu_cau.nhan_vien and staff_profile:
-                    yeu_cau.nhan_vien = staff_profile
-                status_changed = True
-
-        elif action == 'complete':
-            if yeu_cau.tinh_trang != 'da_xu_ly':
-                yeu_cau.tinh_trang = 'da_xu_ly'
-                yeu_cau.thoi_gian_hoan_thanh = timezone.now()
-                status_changed = True
-
-        elif action == 'cancel':
-            if yeu_cau.tinh_trang != 'da_huy':
-                yeu_cau.tinh_trang = 'da_huy'
-                status_changed = True
-
-        else:
-            if note_changed:
-                yeu_cau.ghi_chu = note
-                yeu_cau.save()
-                messages.success(request, "Đã cập nhật ghi chú cho yêu cầu.")
-            else:
-                messages.info(request, "Không có hành động nào được chọn hoặc không có thay đổi ghi chú.")
-            return redirect('process_request', pk=pk)
-
-        if status_changed or note_changed:
-            yeu_cau.ghi_chu = note
-            yeu_cau.save()
-            messages.success(request, f"Yêu cầu đã được cập nhật: {action}.")
-        else:
-            messages.info(request, "Không có thay đổi nào được thực hiện.")
-
-        return redirect('process_request', pk=pk)
-
-    available_staff = NhanVien.objects.filter(trang_thai='dang_lam') if request.user.loai_tk == 'admin' else []
-
-    context = {
-        'yeu_cau': yeu_cau,
-        'available_staff': available_staff,
-        'is_admin': request.user.loai_tk == 'admin',
-        'is_staff': request.user.loai_tk == 'nhan_vien',
-        'staff_profile': staff_profile,
-    }
-    return render(request, 'admin/process_request.html', context)
 
 @login_required
 @user_passes_test(lambda u: u.is_authenticated and getattr(u, 'loai_tk', '').strip().lower() in ['admin', 'nhan_vien'])
@@ -1449,58 +1506,6 @@ def customer_bookings(request):
     return render(request, 'core/customer_bookings.html', context)
 
 
-
-@login_required
-@user_passes_test(is_customer)
-def customer_requests(request):
-    if not hasattr(request.user, 'khachhang'):
-        messages.error(request, "Bạn không có quyền truy cập mục này.")
-        return redirect('home')
-
-    confirmed_bookings = DonDatPhong.objects.filter(
-        khach_hang=request.user.khachhang,
-        trang_thai__in=['da_xac_nhan', 'da_checkin']
-    ).order_by('-ngay_dat')
-
-    context = {
-        'bookings': confirmed_bookings,
-    }
-    return render(request, 'core/customer_requests.html', context)
-
-@login_required
-@user_passes_test(is_customer)
-def request_detail(request, booking_pk):
-    booking = get_object_or_404(DonDatPhong, pk=booking_pk)
-
-    if not hasattr(request.user, 'khachhang') or booking.khach_hang != request.user.khachhang:
-        messages.error(request, "Bạn không có quyền truy cập mục này.")
-        return redirect('home')
-
-    customer_requests_list = YeuCau.objects.filter(
-        phong=booking.phong,
-        khach_hang=request.user.khachhang
-    ).order_by('-ngay_tao')
-
-    if request.method == 'POST':
-        form = YeuCauForm(request.POST)
-        if form.is_valid():
-            yeu_cau = form.save(commit=False)
-            yeu_cau.khach_hang = request.user.khachhang
-            yeu_cau.phong = booking.phong
-            yeu_cau.save()
-            messages.success(request, "Đã gửi yêu cầu thành công.")
-            return redirect('request_detail', booking_pk=booking_pk)
-        else:
-            messages.error(request, "Vui lòng kiểm tra lại thông tin yêu cầu.")
-    else:
-        form = YeuCauForm(initial={'phong': booking.phong})
-
-    context = {
-        'booking': booking,
-        'requests': customer_requests_list,
-        'form': form,
-    }
-    return render(request, 'core/request_detail.html', context)
 
 # ------------------- Profile Views (Customer and Staff) -------------------
 

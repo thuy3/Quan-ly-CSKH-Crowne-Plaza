@@ -60,7 +60,7 @@ class ProfileEditViewTests(TestCase):
 class CustomerBookingViewTests(TestCase):
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='cus1', password='123', loai_tk='khach_hang')
+        self.user = tai_khoan.objects.create_user(username='cus1', password='123', loai_tk='khach_hang')
         self.khachhang = KhachHang.objects.create(user=self.user, anh_dai_dien='default.jpg')
 
         self.phong = Phong.objects.create(ten_p='P101', loai_p='VIP')
@@ -80,7 +80,7 @@ class CustomerBookingViewTests(TestCase):
         self.assertIn('page_obj', response.context)
 
     def test_customer_bookings_not_customer(self):
-        other_user = User.objects.create_user(username='staff1', password='123', loai_tk='nhan_vien')
+        other_user = tai_khoan.objects.create_user(username='staff1', password='123', loai_tk='nhan_vien')
         self.client.login(username='staff1', password='123')
         response = self.client.get(reverse('customer_bookings'))
         self.assertEqual(response.status_code, 302)  # bị redirect vì không phải customer
@@ -89,7 +89,7 @@ class CustomerBookingViewTests(TestCase):
 class RequestDetailViewTests(TestCase):
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='cus2', password='123', loai_tk='khach_hang')
+        self.user = tai_khoan.objects.create_user(username='cus2', password='123', loai_tk='khach_hang')
         self.khachhang = KhachHang.objects.create(user=self.user, anh_dai_dien='default.jpg')
 
         self.phong = Phong.objects.create(ten_p='P102', loai_p='Standard')
@@ -119,7 +119,7 @@ class RequestDetailViewTests(TestCase):
         self.assertTrue(YeuCau.objects.filter(noi_dung='Cần thêm khăn tắm').exists())
 
     def test_request_detail_not_owner(self):
-        other_user = User.objects.create_user(username='other', password='123', loai_tk='khach_hang')
+        other_user = tai_khoan.objects.create_user(username='other', password='123', loai_tk='khach_hang')
         other_kh = KhachHang.objects.create(user=other_user, anh_dai_dien='x.jpg')
         self.client.login(username='other', password='123')
         response = self.client.get(reverse('request_detail', kwargs={'booking_pk': self.ddp.pk}))
